@@ -771,10 +771,10 @@ export const useStore = create<AppState>((set, get) => ({
         warehouseApi.getUnits()
       ]);
       set({ 
-        apiMaterials: materialsRes.results || [], 
-        apiCategories: categoriesRes.results || [],
-        apiUnits: unitsRes.results || [],
-        apiOffcuts: offcutsRes.results || [],
+        apiMaterials: materialsRes.data || [], 
+        apiCategories: categoriesRes.data || [],
+        apiUnits: unitsRes.data || [],
+        apiOffcuts: offcutsRes.data || [],
         isLoading: false 
       });
     } catch (err: any) {
@@ -800,7 +800,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const response = await bomApi.getBOMs(orderId);
       set({ 
-        apiBOMs: response.results || [],
+        apiBOMs: response.data || [],
         isLoading: false 
       });
     } catch (err: any) {
