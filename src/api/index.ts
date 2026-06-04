@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { FinancialTransaction, WorkerDailyStatus, Order, Worker, ProductionStage } from '../types';
+import type { FinancialTransaction, WorkerDailyStatus, Order, Worker, ProductionStage, Material, MaterialCategory, Offcut, BOM, PaginatedResponse } from '../types';
 
 // API client instance
 export const api = axios.create({
@@ -58,6 +58,40 @@ export const financeApi = {
   },
   addTransaction: async (tx: Omit<FinancialTransaction, 'id' | 'createdAt'>) => {
     const response = await api.post<FinancialTransaction>('/finance/transactions/', tx);
+    return response.data;
+  },
+};
+
+export const warehouseApi = {
+  getCategories: async () => {
+    const response = await api.get<PaginatedResponse<MaterialCategory>>('/categories/');
+    return response.data;
+  },
+  getMaterials: async (params?: { low_stock?: boolean; category?: number }) => {
+    const response = await api.get<PaginatedResponse<Material>>('/materials/', { params });
+    return response.data;
+  },
+  createMaterial: async (data: Omit<Material, 'id'>) => {
+    const response = await api.post<{ message: string; data: Material }>('/materials/', data);
+    return response.data;
+  },
+  getOffcuts: async () => {
+    const response = await api.get<PaginatedResponse<Offcut>>('/offcuts/');
+    return response.data;
+  },
+  createOffcut: async (data: Omit<Offcut, 'id'>) => {
+    const response = await api.post<{ message: string; data: Offcut }>('/offcuts/', data);
+    return response.data;
+  },
+};
+
+export const bomApi = {
+  getBOMs: async (orderId?: number) => {
+    const response = await api.get<PaginatedResponse<BOM>>('/bom/', { params: { order: orderId } });
+    return response.data;
+  },
+  createBOM: async (data: Omit<BOM, 'id'>) => {
+    const response = await api.post<{ message: string; data: BOM }>('/bom/', data);
     return response.data;
   },
 };

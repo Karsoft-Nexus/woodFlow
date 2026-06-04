@@ -98,6 +98,53 @@ export interface StockTransaction {
 }
 
 // ==========================================================================
+// 2.1 INVENTORY & BOM TYPES (Alimplas API Schema)
+// ==========================================================================
+export interface MaterialCategory {
+  id: number;
+  name: string;
+}
+
+export interface Material {
+  id: number;
+  name: string;
+  is_sheet: boolean;
+  length?: string | null;
+  width?: string | null;
+  thickness?: string | null;
+  quantity: string;
+  low_stock_threshold: string;
+  unit_price: string;
+  category: number;
+}
+
+export interface Offcut {
+  id: number;
+  material: number;
+  length: string;
+  width: string;
+  qty: number;
+  status: 'AVAILABLE' | 'USED' | 'SCRAP';
+  added_date?: string;
+}
+
+export interface BOM {
+  id?: number;
+  order: number;
+  material: number;
+  required_qty: string;
+  allocated_qty?: string;
+  unit_price?: string;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+// ==========================================================================
 // 3. WORKER & PRODUCTION STAGES
 // ==========================================================================
 export type WorkerDailyStatus = 'WORKSHOP' | 'INSTALLATION' | 'ABSENT';
