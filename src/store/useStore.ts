@@ -764,18 +764,27 @@ export const useStore = create<AppState>((set, get) => ({
   fetchInventoryAPI: async () => {
     set({ isLoading: true, error: null });
     try {
-      const [materialsRes, categoriesRes, offcutsRes, unitsRes] = await Promise.all([
+      const results = await Promise.allSettled([
         warehouseApi.getMaterials(),
         warehouseApi.getCategories(),
         warehouseApi.getOffcuts(),
         warehouseApi.getUnits()
       ]);
-      const extractArray = (res: any) => Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (Array.isArray(res?.results) ? res.results : []));
+      
+      const extractArray = (promiseRes: any, name: string) => {
+        if (promiseRes.status !== 'fulfilled') {
+          console.error(`API Fetch Failed for ${name}:`, promiseRes.reason);
+          return [];
+        }
+        const res = promiseRes.value;
+        return Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (Array.isArray(res?.results) ? res.results : []));
+      };
+
       set({ 
-        apiMaterials: extractArray(materialsRes), 
-        apiCategories: extractArray(categoriesRes),
-        apiUnits: extractArray(unitsRes),
-        apiOffcuts: extractArray(offcutsRes),
+        apiMaterials: extractArray(results[0], 'materials'), 
+        apiCategories: extractArray(results[1], 'categories'),
+        apiOffcuts: extractArray(results[2], 'offcuts'),
+        apiUnits: extractArray(results[3], 'units'),
         isLoading: false 
       });
     } catch (err: any) {
