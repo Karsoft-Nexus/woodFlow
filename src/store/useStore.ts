@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction } from '../types';
+import { productionApi, financeApi } from '../api';
 
 interface AppState {
   orders: Order[];
@@ -9,12 +10,15 @@ interface AppState {
   products: Product[];
   bomItems: BOMItem[];
   stockTransactions: StockTransaction[];
+  isLoading: boolean;
+  error: string | null;
   
   // Actions
-  updateWorkerDailyStatus: (workerId: string, status: WorkerDailyStatus) => void;
-  startStage: (stageId: string, workerId: string) => void;
-  finishStage: (stageId: string) => void;
-  addFinancialTransaction: (tx: Omit<FinancialTransaction, 'id' | 'createdAt'>) => void;
+  fetchInitialData: () => Promise<void>;
+  updateWorkerDailyStatus: (workerId: string, status: WorkerDailyStatus) => Promise<void>;
+  startStage: (stageId: string, workerId: string) => Promise<void>;
+  finishStage: (stageId: string) => Promise<void>;
+  addFinancialTransaction: (tx: Omit<FinancialTransaction, 'id' | 'createdAt'>) => Promise<void>;
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   assignWorkerToStage: (stageId: string, workerId: string) => void;
@@ -181,8 +185,35 @@ export const useStore = create<AppState>((set) => ({
   products: initialProducts,
   bomItems: initialBOMItems,
   stockTransactions: initialStockTransactions,
+  isLoading: false,
+  error: null,
 
-  updateWorkerDailyStatus: (workerId, status) => {
+  fetchInitialData: async () => {
+    set({ isLoading: true });
+    try {
+      const boardData = await productionApi.getBoardData();
+      const transactions = await financeApi.getTransactions();
+      set({
+        orders: boardData.orders && boardData.orders.length ? boardData.orders : initialOrders,
+        workers: boardData.workers && boardData.workers.length ? boardData.workers : initialWorkers,
+        productionStages: boardData.productionStages && boardData.productionStages.length ? boardData.productionStages : initialProductionStages,
+        financeTransactions: transactions && transactions.length ? transactions : initialFinanceTransactions,
+        isLoading: false,
+        error: null,
+      });
+    } catch (err: any) {
+      console.warn("API initialization failed, using initial mock data:", err);
+      // Keep mock data which is already initialized in state
+      set({ isLoading: false, error: err.message || "Failed to load API data" });
+    }
+  },
+
+  updateWorkerDailyStatus: async (workerId, status) => {
+    try {
+      await productionApi.setDailyStatus(workerId, status);
+    } catch (err) {
+      console.warn("API setDailyStatus failed, falling back to local store update:", err);
+    }
     set((state) => ({
       workers: state.workers.map((w) =>
         w.id === workerId ? { ...w, dailyStatus: status } : w
@@ -190,8 +221,13 @@ export const useStore = create<AppState>((set) => ({
     }));
   },
 
-  startStage: (stageId, workerId) => {
+  startStage: async (stageId, workerId) => {
     const now = new Date().toISOString();
+    try {
+      await productionApi.startStage(stageId, workerId);
+    } catch (err) {
+      console.warn("API startStage failed, falling back to local store update:", err);
+    }
     set((state) => {
       const stage = state.productionStages.find((s) => s.id === stageId);
       if (!stage) return {};
@@ -241,8 +277,13 @@ export const useStore = create<AppState>((set) => ({
     });
   },
 
-  finishStage: (stageId) => {
+  finishStage: async (stageId) => {
     const now = new Date().toISOString();
+    try {
+      await productionApi.finishStage(stageId);
+    } catch (err) {
+      console.warn("API finishStage failed, falling back to local store update:", err);
+    }
     set((state) => {
       const stage = state.productionStages.find((s) => s.id === stageId);
       if (!stage) return {};
@@ -298,13 +339,21 @@ export const useStore = create<AppState>((set) => ({
     });
   },
 
-  addFinancialTransaction: (tx) => {
+  addFinancialTransaction: async (tx) => {
     const now = new Date().toISOString();
-    const newTx: FinancialTransaction = {
+    let serverTx: FinancialTransaction | null = null;
+    try {
+      serverTx = await financeApi.addTransaction(tx);
+    } catch (err) {
+      console.warn("API addTransaction failed, falling back to local store update:", err);
+    }
+
+    const newTx: FinancialTransaction = serverTx || {
       ...tx,
       id: 't_' + Math.random().toString(36).substr(2, 9),
       createdAt: now,
     };
+
     set((state) => ({
       financeTransactions: [newTx, ...state.financeTransactions],
     }));
@@ -319,11 +368,13 @@ export const useStore = create<AppState>((set) => ({
   updateOrderStatus: (orderId, status) => {
     const now = new Date().toISOString();
     set((state) => {
+      const order = state.orders.find((o) => o.id === orderId);
+      const isTransitioningToProduction = order && order.status !== 'PRODUCTION' && status === 'PRODUCTION';
+      
       const hasStages = state.productionStages.some((s) => s.orderId === orderId);
       let newStages = state.productionStages;
 
       if (status === 'PRODUCTION' && !hasStages) {
-        const order = state.orders.find((o) => o.id === orderId);
         const plannedStart = order?.plannedStartAt || now;
         const plannedEnd = order?.plannedEndAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
         
@@ -337,11 +388,31 @@ export const useStore = create<AppState>((set) => ({
         newStages = [...state.productionStages, ...stagesToAdd];
       }
 
+      let updatedProducts = state.products;
+      if (isTransitioningToProduction) {
+        const orderBom = state.bomItems.filter(b => b.orderId === orderId);
+        updatedProducts = state.products.map(p => {
+          const bomItemsForProduct = orderBom.filter(b => b.productId === p.id);
+          if (bomItemsForProduct.length > 0) {
+            const qtyToReserve = bomItemsForProduct.reduce((sum, b) => sum + (b.allocatedQuantity || b.requiredQuantity), 0);
+            const nextReserved = p.reservedQuantity + qtyToReserve;
+            const nextAvailable = Math.max(0, p.quantityInStock - nextReserved);
+            return {
+              ...p,
+              reservedQuantity: nextReserved,
+              availableQuantity: nextAvailable
+            };
+          }
+          return p;
+        });
+      }
+
       return {
         orders: state.orders.map((o) =>
           o.id === orderId ? { ...o, status, actualStartAt: status === 'PRODUCTION' ? now : o.actualStartAt } : o
         ),
         productionStages: newStages,
+        products: updatedProducts,
       };
     });
   },

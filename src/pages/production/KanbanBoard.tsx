@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { OrderStatus, Order } from '../../types';
 import { 
@@ -10,7 +10,9 @@ import {
   DollarSign, 
   ChevronRight, 
   CheckCircle, 
-  ArrowRightLeft 
+  ArrowRightLeft,
+  Loader2,
+  Clock
 } from 'lucide-react';
 
 const InstagramIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -31,20 +33,24 @@ const InstagramIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 const columns: { status: OrderStatus; label: string; color: string }[] = [
-  { status: 'YANGI_LID', label: 'Yangi Lid', color: 'border-t-blue-500 bg-blue-950/20' },
-  { status: 'ZAMER_BELGILANDI', label: "O'lchov Belgilandi", color: 'border-t-indigo-500 bg-indigo-950/20' },
-  { status: 'ZAMER_BAJARILDI', label: "O'lchov Yuklandi", color: 'border-t-violet-500 bg-violet-950/20' },
-  { status: 'DIZAYN_LOYYAHALASHDA', label: '3D Loyihalashda', color: 'border-t-purple-500 bg-purple-950/20' },
-  { status: 'DIZAYN_TASDIQLANDI', label: 'Dizayn Tasdiqlandi', color: 'border-t-pink-500 bg-pink-950/20' },
-  { status: 'TZ_PLANNER_TUZILDI', label: 'Kichik TZ Tuzildi', color: 'border-t-cyan-500 bg-cyan-950/20' },
-  { status: 'SHARTNOMA_IMZOLANDI', label: 'Shartnoma Imzolandi', color: 'border-t-teal-500 bg-teal-950/20' },
-  { status: 'PRODUCTION', label: 'Ishlab Chiqarishda', color: 'border-t-emerald-500 bg-emerald-950/20' },
-  { status: 'TAYYOR_OTK', label: 'Tayyor (OTK)', color: 'border-t-amber-500 bg-amber-950/20' },
-  { status: 'YOPILDI_USTANOVKA', label: 'O\'rnatildi (Yopildi)', color: 'border-t-slate-500 bg-slate-900/50' }
+  { status: 'YANGI_LID', label: 'Yangi Lid', color: 'border-t-blue-500 bg-blue-950/10' },
+  { status: 'ZAMER_BELGILANDI', label: "O'lchov Belgilandi", color: 'border-t-indigo-500 bg-indigo-950/10' },
+  { status: 'ZAMER_BAJARILDI', label: "O'lchov Yuklandi", color: 'border-t-violet-500 bg-violet-950/10' },
+  { status: 'DIZAYN_LOYYAHALASHDA', label: '3D Loyihalashda', color: 'border-t-purple-500 bg-purple-950/10' },
+  { status: 'DIZAYN_TASDIQLANDI', label: 'Dizayn Tasdiqlandi', color: 'border-t-pink-500 bg-pink-950/10' },
+  { status: 'TZ_PLANNER_TUZILDI', label: 'Kichik TZ Tuzildi', color: 'border-t-cyan-500 bg-cyan-950/10' },
+  { status: 'SHARTNOMA_IMZOLANDI', label: 'Shartnoma Imzolandi', color: 'border-t-teal-500 bg-teal-950/10' },
+  { status: 'PRODUCTION', label: 'Ishlab Chiqarishda', color: 'border-t-emerald-500 bg-emerald-950/10' },
+  { status: 'TAYYOR_OTK', label: 'Tayyor (OTK)', color: 'border-t-amber-500 bg-amber-950/10' },
+  { status: 'YOPILDI_USTANOVKA', label: 'O\'rnatildi (Yopildi)', color: 'border-t-slate-500 bg-slate-900/40' }
 ];
 
 export const KanbanBoard: React.FC = () => {
-  const { orders, productionStages, updateOrderStatus } = useStore();
+  const { orders, productionStages, updateOrderStatus, fetchInitialData, isLoading } = useStore();
+
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
   const getSourceIcon = (source: string) => {
     switch (source) {
@@ -56,19 +62,59 @@ export const KanbanBoard: React.FC = () => {
   };
 
   const isOrderLate = (order: Order) => {
-    if (order.status !== 'PRODUCTION') return false;
+    if (order.status === 'YOPILDI_USTANOVKA') return false;
     
-    // Check if any active production stage for this order is delayed
-    const stages = productionStages.filter(s => s.orderId === order.id);
     const now = new Date();
     
-    return stages.some(stage => {
-      if (stage.status !== 'DONE') {
-        const plannedEnd = new Date(stage.plannedEndAt);
-        return now > plannedEnd;
+    // Check production stages if in PRODUCTION
+    if (order.status === 'PRODUCTION') {
+      const stages = productionStages.filter(s => s.orderId === order.id);
+      if (stages.length > 0) {
+        return stages.some(stage => {
+          if (stage.status !== 'DONE') {
+            const plannedEnd = new Date(stage.plannedEndAt);
+            return now > plannedEnd;
+          }
+          return false;
+        });
       }
-      return false;
-    });
+    }
+    
+    // Fallback to order-level deadline
+    if (order.plannedEndAt) {
+      const plannedEnd = new Date(order.plannedEndAt);
+      return now > plannedEnd;
+    }
+    
+    return false;
+  };
+
+  const getLateDuration = (order: Order) => {
+    if (order.status === 'YOPILDI_USTANOVKA') return '';
+    const now = new Date();
+    let plannedEnd: Date | null = null;
+
+    if (order.status === 'PRODUCTION') {
+      const activeStage = productionStages.find(s => s.orderId === order.id && s.status !== 'DONE');
+      if (activeStage) {
+        plannedEnd = new Date(activeStage.plannedEndAt);
+      }
+    }
+
+    if (!plannedEnd && order.plannedEndAt) {
+      plannedEnd = new Date(order.plannedEndAt);
+    }
+
+    if (plannedEnd && now > plannedEnd) {
+      const diffMs = now.getTime() - plannedEnd.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours < 24) {
+        return `${diffHours} soat kechikdi`;
+      }
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays} kun kechikdi`;
+    }
+    return '';
   };
 
   const getActiveStage = (orderId: string) => {
@@ -101,127 +147,154 @@ export const KanbanBoard: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col p-6 overflow-hidden">
-      <div className="flex justify-between items-center mb-6">
+    <div className="h-full flex flex-col p-6 overflow-hidden bg-gradient-to-br from-brand-dark via-[#0c1220] to-brand-dark">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-100">Ishlab Chiqarish Kanban Doskasi</h1>
-          <p className="text-slate-400 mt-1">Buyurtmalar va lidxonlik quvuri (CRM-dan yopilgungacha bo'lgan barcha bosqichlar)</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-300">
+            Ishlab Chiqarish Kanban Doskasi
+          </h1>
+          <p className="text-slate-400 mt-1 text-sm">
+            Buyurtmalar va lidxonlik quvuri (CRM-dan yopilgungacha bo'lgan barcha bosqichlar)
+          </p>
         </div>
-        <div className="flex items-center gap-3 bg-brand-surface border border-brand-border px-4 py-2 rounded-lg text-sm text-slate-300">
-          <ArrowRightLeft className="w-4 h-4 text-brand-emerald" />
-          <span>Statuslarni o'zgartirish uchun kartalardagi <strong>"Keyingi"</strong> tugmasini bosing</span>
+        <div className="flex items-center gap-3 bg-brand-surface/40 backdrop-blur-md border border-brand-border/60 px-4 py-2.5 rounded-xl text-xs text-slate-300 shadow-lg">
+          <ArrowRightLeft className="w-4 h-4 text-brand-emerald animate-pulse" />
+          <span>Statuslarni o'tkazish uchun kartalardagi <strong>"Keyingi"</strong> tugmasini bosing</span>
         </div>
       </div>
 
-      {/* Columns Container */}
-      <div className="flex-1 flex gap-4 overflow-x-auto pb-4 items-stretch select-none">
-        {columns.map(({ status, label, color }) => {
-          const columnOrders = orders.filter(o => o.status === status);
-          
-          return (
-            <div 
-              key={status} 
-              className={`flex-shrink-0 w-80 rounded-xl border border-brand-border flex flex-col p-4 ${color}`}
-            >
-              {/* Column Header */}
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-brand-border/60">
-                <span className="font-semibold text-slate-200 text-sm tracking-wide">{label}</span>
-                <span className="bg-brand-border text-slate-300 text-xs px-2.5 py-0.5 rounded-full font-bold">
-                  {columnOrders.length}
-                </span>
-              </div>
+      {isLoading ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <Loader2 className="w-10 h-10 text-brand-emerald animate-spin" />
+          <span className="text-sm font-semibold text-slate-400">Ma'lumotlar yuklanmoqda...</span>
+        </div>
+      ) : (
+        /* Columns Container */
+        <div className="flex-1 flex gap-4 overflow-x-auto pb-4 items-stretch select-none scrollbar-thin">
+          {columns.map(({ status, label, color }) => {
+            const columnOrders = orders.filter(o => o.status === status);
+            
+            return (
+              <div 
+                key={status} 
+                className={`flex-shrink-0 w-80 rounded-xl border border-brand-border/80 flex flex-col p-4 transition-all duration-300 backdrop-blur-sm ${color}`}
+              >
+                {/* Column Header */}
+                <div className="flex justify-between items-center mb-4 pb-2 border-b border-brand-border/40">
+                  <span className="font-bold text-slate-200 text-xs tracking-wider uppercase">{label}</span>
+                  <span className="bg-brand-border/80 border border-slate-700/50 text-slate-200 text-xs px-2.5 py-0.5 rounded-full font-extrabold shadow-inner">
+                    {columnOrders.length}
+                  </span>
+                </div>
 
-              {/* Card List */}
-              <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1">
-                {columnOrders.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center border border-dashed border-slate-800 rounded-lg p-6 text-slate-600 text-sm">
-                    Buyurtmalar mavjud emas
-                  </div>
-                ) : (
-                  columnOrders.map(order => {
-                    const late = isOrderLate(order);
-                    
-                    return (
-                      <div 
-                        key={order.id} 
-                        className={`bg-brand-surface border ${late ? 'border-rose-500/80 shadow-[0_0_8px_rgba(244,63,94,0.1)]' : 'border-brand-border hover:border-slate-700'} rounded-lg p-4 transition-all duration-200 relative group flex flex-col justify-between`}
-                      >
-                        {/* Late Warning Glow Pin */}
-                        {late && (
-                          <div className="absolute top-2 right-2 flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                          </div>
-                        )}
-
-                        <div>
-                          {/* Order Meta */}
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs font-mono text-slate-500 tracking-wider">{order.orderNumber}</span>
-                            <div className="flex items-center gap-1.5 bg-brand-dark/80 px-2 py-0.5 rounded border border-brand-border">
-                              {getSourceIcon(order.source)}
-                              <span className="text-[10px] text-slate-400 font-semibold tracking-wider">{order.source}</span>
-                            </div>
-                          </div>
-
-                          {/* Customer Name */}
-                          <h3 className="font-semibold text-slate-200 text-sm mb-1 leading-tight group-hover:text-brand-emerald transition-colors">
-                            {order.customerName}
-                          </h3>
-                          <p className="text-xs text-slate-500 mb-3">{order.customerPhone}</p>
-
-                          {/* Status Details */}
-                          {order.status === 'PRODUCTION' && (
-                            <div className="mb-3 px-2 py-1.5 rounded bg-brand-dark border border-brand-border text-xs flex flex-col gap-1">
-                              <span className="text-slate-500">Hozirgi etapi:</span>
-                              <span className={`font-semibold ${late ? 'text-rose-400' : 'text-slate-300'} flex items-center gap-1`}>
-                                {late && <AlertTriangle className="w-3.5 h-3.5 text-rose-500 animate-pulse-red rounded-full" />}
-                                {getActiveStage(order.id)}
-                              </span>
+                {/* Card List */}
+                <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent">
+                  {columnOrders.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center border border-dashed border-slate-800/80 rounded-xl p-6 text-slate-600 text-xs font-semibold">
+                      Buyurtmalar mavjud emas
+                    </div>
+                  ) : (
+                    columnOrders.map(order => {
+                      const late = isOrderLate(order);
+                      const lateMsg = getLateDuration(order);
+                      
+                      return (
+                        <div 
+                          key={order.id} 
+                          className={`bg-brand-surface/75 backdrop-blur-md border group ${
+                            late 
+                              ? 'border-rose-500/80 shadow-[0_0_12px_rgba(244,63,94,0.15)] bg-gradient-to-b from-[#1b1016]/40 to-brand-surface/80 hover:border-rose-500' 
+                              : 'border-brand-border hover:border-slate-600 hover:shadow-md'
+                          } rounded-xl p-4 transition-all duration-300 relative flex flex-col justify-between`}
+                        >
+                          {/* Late Warning Glow Pin */}
+                          {late && (
+                            <div className="absolute top-3 right-3 flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
                             </div>
                           )}
 
-                          {order.plannedEndAt && (
-                            <div className="flex items-center gap-1 text-[11px] text-slate-400 mb-3">
-                              <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                              <span>Dedlayn: {new Date(order.plannedEndAt).toLocaleDateString()}</span>
+                          <div>
+                            {/* Order Meta */}
+                            <div className="flex justify-between items-center mb-2.5">
+                              <span className="text-[10px] font-bold font-mono text-slate-500 tracking-wider uppercase">{order.orderNumber}</span>
+                              <div className="flex items-center gap-1.5 bg-brand-dark/90 px-2 py-0.5 rounded-md border border-brand-border/60">
+                                {getSourceIcon(order.source)}
+                                <span className="text-[9px] text-slate-400 font-extrabold tracking-wider">{order.source}</span>
+                              </div>
                             </div>
-                          )}
+
+                            {/* Customer Name */}
+                            <h3 className="font-bold text-slate-200 text-sm mb-1 leading-snug group-hover:text-brand-emerald transition-colors">
+                              {order.customerName}
+                            </h3>
+                            <p className="text-[11px] text-slate-500 font-medium mb-3">{order.customerPhone}</p>
+
+                            {/* Status Details */}
+                            {order.status === 'PRODUCTION' && (
+                              <div className={`mb-3 px-2.5 py-2 rounded-lg border text-xs flex flex-col gap-1 ${
+                                late ? 'bg-rose-950/20 border-rose-500/30' : 'bg-brand-dark/50 border-brand-border/60'
+                              }`}>
+                                <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Hozirgi etapi:</span>
+                                <span className={`font-bold ${late ? 'text-rose-400' : 'text-slate-300'} flex items-center gap-1.5`}>
+                                  {late && <AlertTriangle className="w-3.5 h-3.5 text-rose-500 animate-pulse" />}
+                                  {getActiveStage(order.id)}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Late Warning Info Bar */}
+                            {late && lateMsg && (
+                              <div className="mb-3 px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-rose-500" />
+                                <span>{lateMsg}</span>
+                              </div>
+                            )}
+
+                            {order.plannedEndAt && (
+                              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mb-3 font-semibold">
+                                <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                                <span>Dedlayn: {new Date(order.plannedEndAt).toLocaleDateString()}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Bottom Actions */}
+                          <div className="mt-2 pt-3 border-t border-brand-border/50 flex items-center justify-between">
+                            <div className="flex items-center text-slate-200 font-bold text-xs">
+                              <DollarSign className="w-3.5 h-3.5 text-slate-500" />
+                              <span>{(order.totalPrice / 1000000).toFixed(1)} mln UZS</span>
+                            </div>
+
+                            {order.status !== 'YOPILDI_USTANOVKA' && (
+                              <button
+                                onClick={() => handleNextStatus(order)}
+                                className="flex items-center gap-1 bg-brand-border/80 hover:bg-brand-emerald hover:text-brand-dark text-slate-300 hover:scale-[1.03] text-[10px] font-extrabold py-1.5 px-3 rounded-lg border border-transparent hover:border-brand-emerald/30 transition-all duration-300 cursor-pointer shadow-sm shadow-black/10"
+                              >
+                                <span>Keyingi</span>
+                                <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            
+                            {order.status === 'YOPILDI_USTANOVKA' && (
+                              <div className="flex items-center gap-1 text-brand-emerald text-[10px] font-extrabold bg-brand-emerald/10 border border-brand-emerald/20 px-2 py-0.5 rounded-lg shadow-sm">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                <span>Yopildi</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-
-                        {/* Bottom Actions */}
-                        <div className="mt-2 pt-3 border-t border-brand-border/60 flex items-center justify-between">
-                          <div className="flex items-center text-slate-200 font-semibold text-xs">
-                            <DollarSign className="w-3.5 h-3.5 text-slate-500" />
-                            <span>{(order.totalPrice / 1000000).toFixed(1)} mln UZS</span>
-                          </div>
-
-                          {order.status !== 'YOPILDI_USTANOVKA' && (
-                            <button
-                              onClick={() => handleNextStatus(order)}
-                              className="flex items-center gap-1 bg-brand-border hover:bg-brand-emerald hover:text-brand-dark text-slate-300 text-[11px] font-bold py-1 px-2.5 rounded transition-all duration-200 group-hover:border-transparent cursor-pointer"
-                            >
-                              <span>Keyingi</span>
-                              <ChevronRight className="w-3 h-3" />
-                            </button>
-                          )}
-                          
-                          {order.status === 'YOPILDI_USTANOVKA' && (
-                            <div className="flex items-center gap-1 text-brand-emerald text-[11px] font-bold bg-brand-emerald/10 px-2 py-0.5 rounded">
-                              <CheckCircle className="w-3 h-3" />
-                              <span>Yopildi</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+                      );
+                    })
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
