@@ -238,10 +238,10 @@ export const useStore = create<AppState>((set, get) => ({
       const boardData = await productionApi.getBoardData();
       const transactions = await financeApi.getTransactions();
       set({
-        orders: boardData.orders && boardData.orders.length ? boardData.orders : initialOrders,
-        workers: boardData.workers && boardData.workers.length ? boardData.workers : initialWorkers,
-        productionStages: boardData.productionStages && boardData.productionStages.length ? boardData.productionStages : initialProductionStages,
-        financeTransactions: transactions && transactions.length ? transactions : initialFinanceTransactions,
+        orders: boardData && Array.isArray(boardData.orders) ? boardData.orders : initialOrders,
+        workers: boardData && Array.isArray(boardData.workers) ? boardData.workers : initialWorkers,
+        productionStages: boardData && Array.isArray(boardData.productionStages) ? boardData.productionStages : initialProductionStages,
+        financeTransactions: Array.isArray(transactions) ? transactions : initialFinanceTransactions,
         isLoading: false,
         error: null,
       });
