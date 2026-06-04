@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus } from '../types';
+import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction } from '../types';
 
 interface AppState {
   orders: Order[];
@@ -7,6 +7,8 @@ interface AppState {
   productionStages: ProductionStage[];
   financeTransactions: FinancialTransaction[];
   products: Product[];
+  bomItems: BOMItem[];
+  stockTransactions: StockTransaction[];
   
   // Actions
   updateWorkerDailyStatus: (workerId: string, status: WorkerDailyStatus) => void;
@@ -16,6 +18,7 @@ interface AppState {
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   assignWorkerToStage: (stageId: string, workerId: string) => void;
+  addOffcut: (productId: string, length: number, width: number, orderId: string) => void;
 }
 
 // Initial Mock Data
@@ -128,6 +131,18 @@ const initialOrders: Order[] = [
   }
 ];
 
+const initialBOMItems: BOMItem[] = [
+  // BOM for Order 1 (o1)
+  { id: 'b1_1', orderId: 'o1', productId: 'p1', requiredQuantity: 5, allocatedQuantity: 5, unitPriceAtReservation: 350000 },
+  { id: 'b1_2', orderId: 'o1', productId: 'p3', requiredQuantity: 40, allocatedQuantity: 40, unitPriceAtReservation: 3500 },
+  { id: 'b1_3', orderId: 'o1', productId: 'p5', requiredQuantity: 16, allocatedQuantity: 16, unitPriceAtReservation: 25000 },
+  
+  // BOM for Order 4 (o4)
+  { id: 'b4_1', orderId: 'o4', productId: 'p2', requiredQuantity: 3, allocatedQuantity: 3, unitPriceAtReservation: 650000 },
+  { id: 'b4_2', orderId: 'o4', productId: 'p3', requiredQuantity: 20, allocatedQuantity: 20, unitPriceAtReservation: 3500 },
+  { id: 'b4_3', orderId: 'o4', productId: 'p7', requiredQuantity: 8, allocatedQuantity: 8, unitPriceAtReservation: 18000 }
+];
+
 const initialProductionStages: ProductionStage[] = [
   // Stages for Order 1 (Akmal Toshpo'latov - PRODUCTION)
   { id: 's1_1', orderId: 'o1', stageName: 'RASKROY', status: 'DONE', assignedWorkerId: 'w1', plannedStartAt: '2026-06-02T08:00:00Z', plannedEndAt: '2026-06-03T12:00:00Z', actualStartAt: '2026-06-02T09:30:00Z', actualEndAt: '2026-06-03T11:00:00Z', stagePrice: 250000 },
@@ -144,7 +159,7 @@ const initialProductionStages: ProductionStage[] = [
   { id: 's4_5', orderId: 'o4', stageName: 'USTANOVKA', status: 'PENDING', plannedStartAt: '2026-06-05T13:00:00Z', plannedEndAt: '2026-06-05T18:00:00Z', stagePrice: 200000 }
 ];
 
-const initialTransactions: FinancialTransaction[] = [
+const initialFinanceTransactions: FinancialTransaction[] = [
   { id: 't1', type: 'INCOME', category: 'CLIENT_PAYMENT', amount: 12000000, paymentMethod: 'CARD', orderId: 'o1', description: 'Avans: Akmal Toshpo\'latov (WF-2026-001)', createdAt: '2026-06-01T10:05:00Z' },
   { id: 't2', type: 'INCOME', category: 'CLIENT_PAYMENT', amount: 8000000, paymentMethod: 'CASH', orderId: 'o4', description: 'Avans: Davron Abdullayev (WF-2026-004)', createdAt: '2026-06-02T11:15:00Z' },
   { id: 't3', type: 'EXPENSE', category: 'INVENTORY_PURCHASE', amount: 3500000, paymentMethod: 'BANK_TRANSFER', description: 'DSP plitalari sotib olindi (MebelAlimPlas)', createdAt: '2026-06-02T14:00:00Z' },
@@ -152,12 +167,20 @@ const initialTransactions: FinancialTransaction[] = [
   { id: 't5', type: 'EXPENSE', category: 'OTHER', amount: 1200000, paymentMethod: 'CARD', description: 'Sex ijara haqi (qisman)', createdAt: '2026-06-04T09:00:00Z' }
 ];
 
+const initialStockTransactions: StockTransaction[] = [
+  { id: 'st1', productId: 'p1', quantity: 15, unitPrice: 350000, transactionType: 'CHIQIM', createdAt: '2026-06-02T09:30:00Z', notes: 'Zaxiradagi materiallar chegirildi (Order: o1)' },
+  { id: 'st2', productId: 'p3', quantity: 120, unitPrice: 3500, transactionType: 'CHIQIM', createdAt: '2026-06-02T09:30:00Z', notes: 'Zaxiradagi materiallar chegirildi (Order: o1)' },
+  { id: 'st3', productId: 'p1', quantity: 50, unitPrice: 340000, transactionType: 'KIRIM', createdAt: '2026-05-30T10:00:00Z', notes: 'Omborga kirim (MebelAlimPlas)' }
+];
+
 export const useStore = create<AppState>((set) => ({
   orders: initialOrders,
   workers: initialWorkers,
   productionStages: initialProductionStages,
-  financeTransactions: initialTransactions,
+  financeTransactions: initialFinanceTransactions,
   products: initialProducts,
+  bomItems: initialBOMItems,
+  stockTransactions: initialStockTransactions,
 
   updateWorkerDailyStatus: (workerId, status) => {
     set((state) => ({
@@ -173,7 +196,42 @@ export const useStore = create<AppState>((set) => ({
       const stage = state.productionStages.find((s) => s.id === stageId);
       if (!stage) return {};
 
+      let updatedProducts = state.products;
+      let newTransactions = state.stockTransactions;
+
+      // PRD 3.3: Sexda arra (Raskroy) boshlanishi bilan zaxiradagi materiallar ombordan haqiqiy chegiriladi (Deducted)
+      if (stage.stageName === 'RASKROY' && stage.status === 'PENDING') {
+        const orderBom = state.bomItems.filter(b => b.orderId === stage.orderId);
+        
+        updatedProducts = state.products.map(p => {
+          const bom = orderBom.find(b => b.productId === p.id);
+          if (bom) {
+            const qty = bom.allocatedQuantity || bom.requiredQuantity;
+            return {
+              ...p,
+              quantityInStock: Math.max(0, p.quantityInStock - qty),
+              reservedQuantity: Math.max(0, p.reservedQuantity - qty),
+              availableQuantity: Math.max(0, p.quantityInStock - qty - (p.reservedQuantity - qty))
+            };
+          }
+          return p;
+        });
+
+        const txs: StockTransaction[] = orderBom.map(bom => ({
+          id: 'st_' + Math.random().toString(36).substr(2, 9),
+          productId: bom.productId,
+          quantity: bom.allocatedQuantity || bom.requiredQuantity,
+          unitPrice: bom.unitPriceAtReservation,
+          transactionType: 'CHIQIM',
+          createdAt: now,
+          notes: `Raskroy jarayoni boshlandi. Materiallar ombordan chegirildi (Order: ${stage.orderId})`
+        }));
+        newTransactions = [...txs, ...newTransactions];
+      }
+
       return {
+        products: updatedProducts,
+        stockTransactions: newTransactions,
         productionStages: state.productionStages.map((s) =>
           s.id === stageId
             ? { ...s, status: 'IN_PROGRESS', assignedWorkerId: workerId, actualStartAt: now }
@@ -294,5 +352,41 @@ export const useStore = create<AppState>((set) => ({
         s.id === stageId ? { ...s, assignedWorkerId: workerId } : s
       ),
     }));
+  },
+
+  addOffcut: (productId, length, width, orderId) => {
+    const now = new Date().toISOString();
+    set((state) => {
+      const product = state.products.find(p => p.id === productId);
+      if (!product) return {};
+
+      const area = Number((length * width).toFixed(2));
+      
+      const newTx: StockTransaction = {
+        id: 'st_' + Math.random().toString(36).substr(2, 9),
+        productId,
+        quantity: area,
+        unitPrice: product.averagePrice,
+        transactionType: 'KIRIM',
+        createdAt: now,
+        notes: `Raskroy bo'lak qoldig'i (${length}m x ${width}m). Order: ${orderId}`
+      };
+
+      const updatedProducts = state.products.map(p => {
+        if (p.id === productId) {
+          return {
+            ...p,
+            quantityInStock: p.quantityInStock + area,
+            availableQuantity: p.availableQuantity + area
+          };
+        }
+        return p;
+      });
+
+      return {
+        products: updatedProducts,
+        stockTransactions: [newTx, ...state.stockTransactions]
+      };
+    });
   }
 }));

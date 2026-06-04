@@ -19,12 +19,21 @@ export const WorkerTablet: React.FC = () => {
     productionStages, 
     orders, 
     startStage, 
-    finishStage 
+    finishStage,
+    products,
+    addOffcut
   } = useStore();
 
   const [pin, setPin] = useState('');
   const [activeWorker, setActiveWorker] = useState<Worker | null>(null);
   const [error, setError] = useState('');
+
+  // Offcut modal states
+  const [showOffcutModal, setShowOffcutModal] = useState(false);
+  const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
+  const [offcutProductId, setOffcutProductId] = useState('');
+  const [offcutLength, setOffcutLength] = useState('');
+  const [offcutWidth, setOffcutWidth] = useState('');
 
   // Map worker to simple pin codes (w1 -> 1111, w2 -> 2222, etc.)
   const getPinForWorker = (id: string) => {
@@ -33,7 +42,6 @@ export const WorkerTablet: React.FC = () => {
   };
 
   const handlePinSubmit = () => {
-    // Find worker by PIN
     const foundWorker = workers.find(w => getPinForWorker(w.id) === pin);
     if (foundWorker) {
       if (foundWorker.dailyStatus === 'ABSENT') {
@@ -70,22 +78,58 @@ export const WorkerTablet: React.FC = () => {
     setError('');
   };
 
-  // Filter tasks based on worker daily status (Sexda -> WORKSHOP stages, Ustanovkada -> USTANOVKA stages)
+  const handleFinishClick = (stageId: string, stageName: string) => {
+    if (stageName === 'RASKROY') {
+      setSelectedStageId(stageId);
+      const plates = products.filter(p => p.category === 'PLATES');
+      if (plates.length > 0) {
+        setOffcutProductId(plates[0].id);
+      }
+      setShowOffcutModal(true);
+    } else {
+      finishStage(stageId);
+    }
+  };
+
+  const handleSaveOffcutAndFinish = () => {
+    if (selectedStageId) {
+      if (offcutProductId && offcutLength && offcutWidth) {
+        addOffcut(
+          offcutProductId,
+          Number(offcutLength),
+          Number(offcutWidth),
+          productionStages.find(s => s.id === selectedStageId)?.orderId || ''
+        );
+      }
+      finishStage(selectedStageId);
+      setShowOffcutModal(false);
+      setSelectedStageId(null);
+      setOffcutLength('');
+      setOffcutWidth('');
+    }
+  };
+
+  const handleSkipOffcutAndFinish = () => {
+    if (selectedStageId) {
+      finishStage(selectedStageId);
+      setShowOffcutModal(false);
+      setSelectedStageId(null);
+    }
+  };
+
+  // Filter tasks based on worker daily status
   const getWorkerTasks = () => {
     if (!activeWorker) return [];
 
     const isInstallationWorker = activeWorker.dailyStatus === 'INSTALLATION';
 
     return productionStages.filter(stage => {
-      // Must not be completed
       if (stage.status === 'DONE') return false;
 
-      // Filter by stage type compatibility
       const isInstallStage = stage.stageName === 'USTANOVKA';
       if (isInstallationWorker && !isInstallStage) return false;
       if (!isInstallationWorker && isInstallStage) return false;
 
-      // Check if either unassigned or assigned to this specific worker
       return !stage.assignedWorkerId || stage.assignedWorkerId === activeWorker.id;
     });
   };
@@ -281,7 +325,7 @@ export const WorkerTablet: React.FC = () => {
                             </button>
                           ) : (
                             <button
-                              onClick={() => finishStage(stage.id)}
+                              onClick={() => handleFinishClick(stage.id, stage.stageName)}
                               className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-slate-100 font-extrabold px-6 py-3.5 rounded-xl transition-colors cursor-pointer text-sm tracking-wide shrink-0"
                             >
                               <Check className="w-4 h-4 stroke-[3]" />
@@ -299,6 +343,74 @@ export const WorkerTablet: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Offcut Modal Dialog */}
+      {showOffcutModal && (
+        <div className="fixed inset-0 bg-brand-dark/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-brand-surface border border-brand-border w-full max-w-md rounded-2xl p-6 space-y-4">
+            <h3 className="text-lg font-bold text-slate-200">Arra (Raskroy) qoldiq bo'lagi</h3>
+            <p className="text-xs text-slate-500">
+              Ushbu kesish jarayonidan keyin keyingi buyurtmalarda ishlatishga yaroqli bo'lgan plita qoldiq bo'lagi qoldimi?
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Plita Turi</label>
+                <select
+                  value={offcutProductId}
+                  onChange={(e) => setOffcutProductId(e.target.value)}
+                  className="w-full bg-brand-dark border border-brand-border text-slate-300 text-xs rounded-lg p-2.5 focus:ring-brand-emerald focus:border-brand-emerald cursor-pointer"
+                >
+                  {products.filter(p => p.category === 'PLATES').map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Bo'yi (metr)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Masalan: 1.2"
+                    value={offcutLength}
+                    onChange={(e) => setOffcutLength(e.target.value)}
+                    className="w-full bg-brand-dark border border-brand-border text-slate-300 text-xs rounded-lg p-2.5 focus:ring-brand-emerald focus:border-brand-emerald"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Eni (metr)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Masalan: 0.8"
+                    value={offcutWidth}
+                    onChange={(e) => setOffcutWidth(e.target.value)}
+                    className="w-full bg-brand-dark border border-brand-border text-slate-300 text-xs rounded-lg p-2.5 focus:ring-brand-emerald focus:border-brand-emerald"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleSkipOffcutAndFinish}
+                className="flex-1 bg-brand-dark hover:bg-slate-800 border border-brand-border text-slate-400 font-bold py-2.5 rounded-lg text-xs tracking-wider transition-colors cursor-pointer"
+              >
+                QOLDIQ QOLMADI
+              </button>
+              <button
+                onClick={handleSaveOffcutAndFinish}
+                disabled={!offcutLength || !offcutWidth}
+                className="flex-1 bg-brand-emerald disabled:bg-slate-800 disabled:text-slate-600 hover:bg-emerald-400 text-brand-dark font-extrabold py-2.5 rounded-lg text-xs tracking-wider transition-colors cursor-pointer"
+              >
+                QOLDIQNI SAQLASH
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
