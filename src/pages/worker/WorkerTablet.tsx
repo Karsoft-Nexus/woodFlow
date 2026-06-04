@@ -60,7 +60,11 @@ export const WorkerTablet: React.FC = () => {
     setPayoutsLoading(true);
     try {
       const data = await productionApi.getWorkerPayouts(workerId);
-      setPayouts(data);
+      if (Array.isArray(data)) {
+        setPayouts(data);
+      } else {
+        throw new Error("API response is not an array");
+      }
     } catch (err) {
       console.warn("Failed to fetch worker payouts, generating local fallback payouts list:", err);
       // Local fallback: filter finance transactions of type EXPENSE and category WORKER_PAYOUT for this worker
