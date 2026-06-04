@@ -18,6 +18,11 @@ body {
 }
 
 /* Custom scrollbars for a premium feel */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b #090d16;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

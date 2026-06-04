@@ -6,8 +6,16 @@ import { WorkerTablet } from './pages/worker/WorkerTablet';
 import { FinanceLedger } from './pages/finance/FinanceLedger';
 import { OrdersCRM } from './pages/orders/OrdersCRM';
 import { InventoryBOM } from './pages/inventory/InventoryBOM';
+import { Login } from './components/Login';
+import { useStore } from './store/useStore';
 
 function App() {
+  const { isAuthenticated } = useStore();
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
   return (
     <BrowserRouter>
       <div className="flex h-screen w-screen overflow-hidden bg-brand-dark">

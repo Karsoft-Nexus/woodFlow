@@ -77,7 +77,7 @@ export const WorkerTablet: React.FC = () => {
             workerId: workerId,
             stageId: t.orderId || '',
             amount: t.amount,
-            stageName: t.description.split(' haqi')[0] || 'Bosqich Ishi',
+            stageName: t.description.split(' haqi')[0] || 'Басқыш жумысы',
             orderNumber: orderNum,
             createdAt: t.createdAt
           };
@@ -92,7 +92,7 @@ export const WorkerTablet: React.FC = () => {
     const foundWorker = workers.find(w => getPinForWorker(w.id) === pin);
     if (foundWorker) {
       if (foundWorker.dailyStatus === 'ABSENT') {
-        setError('Siz bugun "Kelmagan" deb belgilangansiz. Iltimos, menejerga murojaat qiling!');
+        setError('Siz бүгин "Келмеген" деп белгиленгенсиз. Илтимос, менеджерге мүрәжат этиң!');
         setPin('');
       } else {
         setActiveWorker(foundWorker);
@@ -101,7 +101,7 @@ export const WorkerTablet: React.FC = () => {
         loadWorkerPayouts(foundWorker.id);
       }
     } else {
-      setError('Noto\'g\'ri PIN-kod! Qaytadan urinib ko\'ring.');
+      setError('Қәте PIN-код! Қайтадан урынып көриң.');
       setPin('');
     }
   };
@@ -220,8 +220,8 @@ export const WorkerTablet: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6 pb-4 border-b border-brand-border/60 shrink-0">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-100">Ustalar Doskasi (Planshet Paneli)</h1>
-          <p className="text-xs text-slate-500 mt-0.5 font-medium">Sexdagi planshet va mobil telefonlar uchun moslashtirilgan interfeys</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-100">Усталар Доскасы (Планшет Панели)</h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">Цехтағы планшет ҳәм мобиль телефонлар ушын бейимлестирилген интерфейс</p>
         </div>
         {activeWorker && (
           <button
@@ -229,7 +229,7 @@ export const WorkerTablet: React.FC = () => {
             className="flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500 hover:text-brand-dark text-rose-450 font-bold px-4 py-2.5 rounded-lg text-xs tracking-wider transition-all duration-350 cursor-pointer shadow-md"
           >
             <LogOut className="w-4 h-4" />
-            <span>Tizimdan Chiqish</span>
+            <span>Системадан шығыў</span>
           </button>
         )}
       </div>
@@ -237,7 +237,7 @@ export const WorkerTablet: React.FC = () => {
       {isLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-10 h-10 text-brand-emerald animate-spin" />
-          <span className="text-sm font-semibold text-slate-400">Ma'lumotlar yuklanmoqda...</span>
+          <span className="text-sm font-semibold text-slate-400">Мағлыўматлар жүкленбекте...</span>
         </div>
       ) : (
         /* Main Body */
@@ -249,9 +249,9 @@ export const WorkerTablet: React.FC = () => {
                 <Lock className="w-8 h-8" />
               </div>
               
-              <h2 className="text-xl font-bold text-slate-200 mb-1">Sex Tizimiga Kirish</h2>
+              <h2 className="text-xl font-bold text-slate-200 mb-1">Цех Системасына Кириў</h2>
               <p className="text-xs text-slate-500 mb-6 text-center font-medium">
-                Usta ID Pin-kodini kiriting (Masalan: w1 usta uchun "1111", w10 usta uchun "0000")
+                Уста ID Pin-кодын киргизесиз (Мәселен: w1 уста ушын "1111", w10 уста ушын "0000")
               </p>
 
               {/* Display Box */}
@@ -292,7 +292,7 @@ export const WorkerTablet: React.FC = () => {
                   onClick={handleClear}
                   className="bg-brand-dark/75 hover:bg-slate-800 border border-brand-border text-rose-450 text-xs font-extrabold h-14 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-sm"
                 >
-                  TOZALASH
+                  ТАЗАЛАЎ
                 </button>
                 <button
                   onClick={() => handleKeyPress('0')}
@@ -304,7 +304,7 @@ export const WorkerTablet: React.FC = () => {
                   onClick={handleBackspace}
                   className="bg-brand-dark/75 hover:bg-slate-800 border border-brand-border text-slate-400 text-xs font-extrabold h-14 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-sm"
                 >
-                  O'CHIRISH
+                  ӨШИРИЎ
                 </button>
               </div>
 
@@ -313,7 +313,7 @@ export const WorkerTablet: React.FC = () => {
                 disabled={pin.length < 4}
                 className="w-full bg-brand-emerald disabled:bg-slate-800/80 disabled:text-slate-650 hover:bg-emerald-400 text-brand-dark font-extrabold py-3.5 rounded-xl transition-all duration-200 cursor-pointer text-xs tracking-wider uppercase shadow-md"
               >
-                KIRISH
+                КИРИЎ
               </button>
             </div>
           ) : (
@@ -335,13 +335,13 @@ export const WorkerTablet: React.FC = () => {
                           {activeWorker.specialty}
                         </span>
                         <span>•</span>
-                        <span className="text-slate-400 font-semibold">{activeWorker.dailyStatus === 'WORKSHOP' ? 'Sexda' : 'O\'rnatishda'}</span>
+                        <span className="text-slate-400 font-semibold">{activeWorker.dailyStatus === 'WORKSHOP' ? 'Цехта' : 'Орнатыўда'}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="border-t border-brand-border/40 pt-4 flex justify-between items-center text-xs">
-                    <span className="text-slate-500 font-bold uppercase tracking-wider">Ustaning Reytingi</span>
+                    <span className="text-slate-500 font-bold uppercase tracking-wider">Устаның Рейтинги</span>
                     <div className="flex items-center gap-1 text-amber-400 font-extrabold text-sm">
                       <Star className="w-4 h-4 fill-current text-amber-500" />
                       <span>{activeWorker.rating}</span>
@@ -349,10 +349,10 @@ export const WorkerTablet: React.FC = () => {
                   </div>
 
                   <div className="border-t border-brand-border/40 pt-4 flex justify-between items-center">
-                    <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Ishbay Balans</span>
+                    <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Ислеген жумыс балансы</span>
                     <div className="text-brand-emerald font-extrabold text-xl flex items-center">
                       <DollarSign className="w-4.5 h-4.5 shrink-0" />
-                      <span>{getUpdatedWorkerBalance().toLocaleString()} so'm</span>
+                      <span>{getUpdatedWorkerBalance().toLocaleString()} сум</span>
                     </div>
                   </div>
                 </div>
@@ -361,7 +361,7 @@ export const WorkerTablet: React.FC = () => {
                 <div className="bg-brand-surface/65 backdrop-blur-md border border-brand-border/80 rounded-2xl p-6 shadow-xl space-y-4">
                   <h3 className="font-bold text-slate-200 text-sm flex items-center gap-2">
                     <History className="w-4 h-4 text-brand-emerald" />
-                    Bajarilgan Ishlar & Payoutlar
+                    Орынланған жумыслар ҳәм Төлемлер
                   </h3>
 
                   {payoutsLoading ? (
@@ -369,7 +369,7 @@ export const WorkerTablet: React.FC = () => {
                       <Loader2 className="w-6 h-6 text-brand-emerald animate-spin" />
                     </div>
                   ) : payouts.length === 0 ? (
-                    <p className="text-xs text-slate-550 py-4 text-center">Bajarilgan ishlar tarixi topilmadi.</p>
+                    <p className="text-xs text-slate-550 py-4 text-center">Орынланған жумыслар тарийхы табылмады.</p>
                   ) : (
                     <div className="space-y-3 max-h-60 overflow-y-auto pr-1 scrollbar-thin">
                       {payouts.map(p => (
@@ -399,17 +399,17 @@ export const WorkerTablet: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <h3 className="font-bold text-slate-200 text-base flex items-center gap-2">
                     <FileText className="w-4 h-4 text-brand-emerald" />
-                    Sizga Tegishli Topshiriqlar
+                    Сизге тийисли тапсырмалар
                   </h3>
                   <span className="bg-brand-border/80 border border-slate-700/60 text-slate-200 text-xs px-2.5 py-0.5 rounded-full font-bold">
-                    {getWorkerTasks().length} ta faol
+                    {getWorkerTasks().length} актив
                   </span>
                 </div>
 
                 <div className="space-y-3">
                   {getWorkerTasks().length === 0 ? (
                     <div className="bg-brand-surface/65 backdrop-blur-md border border-brand-border/85 rounded-2xl p-10 text-center text-slate-500 text-sm font-semibold">
-                      Ayni paytda siz uchun hech qanday bo'sh topshiriq mavjud emas.
+                      Ҳәзирги ўақытта сизге тийисли бос тапсырмалар жоқ.
                     </div>
                   ) : (
                     getWorkerTasks().map(stage => {
@@ -431,20 +431,20 @@ export const WorkerTablet: React.FC = () => {
                               </span>
                               {stage.status === 'IN_PROGRESS' && (
                                 <span className="text-[9px] bg-brand-emerald/10 text-brand-emerald border border-brand-emerald/20 px-2 py-0.5 rounded-md font-extrabold animate-pulse">
-                                  Bajarilmoqda
+                                  Орынланбақта
                                 </span>
                               )}
                             </div>
                             
                             <h4 className="font-bold text-slate-200 text-sm">{custName}</h4>
                             <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1 font-semibold">
-                              <span>Dedlayn:</span>
+                              <span>Дедлайн:</span>
                               <span className="text-slate-400">{new Date(stage.plannedEndAt).toLocaleString()}</span>
                             </div>
                             
                             <div className="mt-3.5 text-xs flex items-center gap-1 font-extrabold text-brand-emerald">
                               <DollarSign className="w-3.5 h-3.5" />
-                              <span>Ishbay haq: {stage.stagePrice.toLocaleString()} so'm</span>
+                              <span>Ислеген жумыс ҳақы: {stage.stagePrice.toLocaleString()} сум</span>
                             </div>
                           </div>
 
@@ -456,7 +456,7 @@ export const WorkerTablet: React.FC = () => {
                                 className="w-full md:w-auto flex items-center justify-center gap-2 bg-brand-emerald hover:bg-emerald-400 text-brand-dark font-extrabold px-6 py-3.5 rounded-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer text-xs tracking-wider uppercase shrink-0 shadow-md shadow-brand-emerald/10"
                               >
                                 <Play className="w-4 h-4 fill-current" />
-                                <span>Boshlash (Start)</span>
+                                <span>Баслаў (Start)</span>
                               </button>
                             ) : (
                               <button
@@ -464,7 +464,7 @@ export const WorkerTablet: React.FC = () => {
                                 className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-slate-100 font-extrabold px-6 py-3.5 rounded-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer text-xs tracking-wider uppercase shrink-0 shadow-md shadow-blue-900/10"
                               >
                                 <Check className="w-4 h-4 stroke-[3]" />
-                                <span>Tugatish (Finish)</span>
+                                <span>Таўсыў (Finish)</span>
                               </button>
                             )}
                           </div>
@@ -486,44 +486,44 @@ export const WorkerTablet: React.FC = () => {
           <div className="bg-brand-surface border border-brand-border w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
             <div className="flex items-center gap-2 text-brand-emerald font-extrabold">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <h3 className="text-lg font-bold text-slate-200">Raskroy Qoldiq Bo'lagi</h3>
+              <h3 className="text-lg font-bold text-slate-200">Раскройдың қалдық бөлеги</h3>
             </div>
             <p className="text-xs text-slate-400 font-medium leading-relaxed">
-              Arra bosqichidan keyin kelasi buyurtmalarda qayta foydalanish uchun mos bo'lgan DSP/MDF plita qoldiq bo'lagi qoldimi?
+              Кесиў басқышынан кейинги буйыртпаларда қайтадан пайдаланыўға жарамлы болған ДСП/МДФ плита қалдық бөлеги қалды ма?
             </p>
 
             <div className="space-y-4 pt-1">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Plita Turi</label>
+                <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Плита түри</label>
                 <select
                   value={offcutProductId}
                   onChange={(e) => setOffcutProductId(e.target.value)}
-                  className="w-full bg-brand-dark border border-brand-border text-slate-350 text-xs rounded-lg p-3 focus:ring-brand-emerald focus:border-brand-emerald cursor-pointer"
+                  className="w-full bg-brand-dark border border-brand-border text-slate-355 text-xs rounded-lg p-3 focus:ring-brand-emerald focus:border-brand-emerald cursor-pointer"
                 >
                   {products.filter(p => p.category === 'PLATES').map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.quantityInStock} dona bor)</option>
+                    <option key={p.id} value={p.id}>{p.name} ({p.quantityInStock} дана бар)</option>
                   ))}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Bo'yi (metr)</label>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Узынлығы (метр)</label>
                   <input
                     type="number"
                     step="0.01"
-                    placeholder="Masalan: 1.2"
+                    placeholder="Мәселен: 1.2"
                     value={offcutLength}
                     onChange={(e) => setOffcutLength(e.target.value)}
                     className="w-full bg-brand-dark border border-brand-border text-slate-250 text-xs rounded-lg p-3 focus:ring-brand-emerald focus:border-brand-emerald font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Eni (metr)</label>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Ени (метр)</label>
                   <input
                     type="number"
                     step="0.01"
-                    placeholder="Masalan: 0.8"
+                    placeholder="Мәселен: 0.8"
                     value={offcutWidth}
                     onChange={(e) => setOffcutWidth(e.target.value)}
                     className="w-full bg-brand-dark border border-brand-border text-slate-250 text-xs rounded-lg p-3 focus:ring-brand-emerald focus:border-brand-emerald font-semibold"
@@ -537,14 +537,14 @@ export const WorkerTablet: React.FC = () => {
                 onClick={handleSkipOffcutAndFinish}
                 className="flex-1 bg-brand-dark/80 hover:bg-slate-800 border border-brand-border text-slate-400 font-bold py-3 rounded-xl text-xs tracking-wider uppercase transition-all duration-300 cursor-pointer"
               >
-                QOLDIQ QOLMADI
+                ҚАЛДЫҚ ҚАЛМАДЫ
               </button>
               <button
                 onClick={handleSaveOffcutAndFinish}
                 disabled={!offcutLength || !offcutWidth}
                 className="flex-1 bg-brand-emerald disabled:bg-slate-800 disabled:text-slate-600 hover:bg-emerald-400 text-brand-dark font-extrabold py-3 rounded-xl text-xs tracking-wider uppercase transition-all duration-300 cursor-pointer shadow-md"
               >
-                QOLDIQNI SAQLASH
+                ҚАЛДЫҚТЫ САҚЛАЎ
               </button>
             </div>
           </div>

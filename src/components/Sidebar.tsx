@@ -7,10 +7,13 @@ import {
   Wallet, 
   Hammer,
   Users,
-  Package
+  Package,
+  LogOut
 } from 'lucide-react';
+import { useStore } from '../store/useStore';
 
 export const Sidebar: React.FC = () => {
+  const { logout } = useStore();
   const menuItems = [
     { to: '/orders', label: 'CRM & Orders', icon: <Users className="w-4 h-4" /> },
     { to: '/inventory', label: 'Inventory & BOM', icon: <Package className="w-4 h-4" /> },
@@ -55,10 +58,18 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Footer Info */}
-      <div className="p-4 border-t border-brand-border text-[10px] text-slate-500 font-mono text-center">
-        v1.0.0 • Complete ERP Edition
+      <div className="p-4 border-t border-brand-border flex flex-col gap-2">
+        <button
+          onClick={logout}
+          className="flex items-center justify-center gap-2 w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/30 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Tizimdan chiqish</span>
+        </button>
+        <div className="text-[10px] text-slate-500 font-mono text-center">
+          v1.0.0 • Complete ERP Edition
+        </div>
       </div>
     </aside>
-
   );
 };

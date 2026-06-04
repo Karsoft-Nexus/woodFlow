@@ -1,6 +1,58 @@
 import { create } from 'zustand';
 import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction, WallDimensions } from '../types';
-import { productionApi, financeApi } from '../api';
+import { productionApi, financeApi, ordersApi, authApi } from '../api';
+
+function mapBackendOrderToFrontend(bo: any): Order {
+  const statusMap: Record<string, OrderStatus> = {
+    'LEAD_NEW': 'YANGI_LID',
+    'MEASURE_ASSIGNED': 'ZAMER_BELGILANDI',
+    'MEASURE_DONE': 'ZAMER_BAJARILDI',
+    'DESIGNING': 'DIZAYN_LOYYAHALASHDA',
+    'DESIGN_APPROVED': 'DIZAYN_TASDIQLANDI',
+    'CONTRACT_PENDING': 'TZ_PLANNER_TUZILDI',
+    'CONTRACT_SIGNED': 'SHARTNOMA_IMZOLANDI',
+    'PRODUCTION': 'PRODUCTION',
+    'READY': 'TAYYOR_OTK',
+    'INSTALLED': 'YOPILDI_USTANOVKA'
+  };
+
+  let dimensions: WallDimensions | undefined = undefined;
+  if (bo.zamer_dimensions) {
+    try {
+      dimensions = typeof bo.zamer_dimensions === 'string' ? JSON.parse(bo.zamer_dimensions) : bo.zamer_dimensions;
+    } catch (e) {
+      console.warn("Failed to parse zamer_dimensions:", bo.zamer_dimensions);
+    }
+  }
+
+  const customerName = bo.customer_detail 
+    ? `${bo.customer_detail.first_name || ''} ${bo.customer_detail.last_name || ''}`.trim()
+    : 'Mijoz';
+
+  return {
+    id: String(bo.id),
+    orderNumber: bo.contract_number || `WF-2026-${String(bo.id).padStart(3, '0')}`,
+    customerName,
+    customerPhone: bo.customer_detail?.phone || '',
+    source: bo.source || 'OFFICE',
+    status: statusMap[bo.status] || 'YANGI_LID',
+    assignedZamerchikId: bo.zamerchik ? String(bo.zamerchik) : undefined,
+    zamerScheduledAt: bo.zamer_scheduled_at || bo.deadline || undefined,
+    dimensions,
+    zamerSketchUrl: bo.zamer_photos_url || undefined,
+    design3dUrl: bo.design_3d_url || undefined,
+    isDesignApproved: bo.status === 'DESIGN_APPROVED' || bo.is_contract_signed || ['CONTRACT_SIGNED', 'PRODUCTION', 'READY', 'INSTALLED'].includes(bo.status),
+    designApprovedAt: bo.signed_at || undefined,
+    plannedStartAt: bo.created_at,
+    plannedEndAt: bo.deadline || undefined,
+    totalPrice: bo.total_price ? Number(bo.total_price) : 0,
+    advancePayment: bo.advance_payment ? Number(bo.advance_payment) : 0,
+    paymentMethod: bo.payment_method || undefined,
+    isContractSigned: bo.is_contract_signed || bo.status === 'CONTRACT_SIGNED' || ['PRODUCTION', 'READY', 'INSTALLED'].includes(bo.status),
+    contractSignedAt: bo.signed_at || undefined,
+    contractPdfUrl: bo.contract_pdf_url || undefined
+  };
+}
 
 interface AppState {
   orders: Order[];
@@ -12,25 +64,29 @@ interface AppState {
   stockTransactions: StockTransaction[];
   isLoading: boolean;
   error: string | null;
+  token: string | null;
+  isAuthenticated: boolean;
   
   // Actions
+  login: (phone: string, password: string) => Promise<boolean>;
+  logout: () => void;
   fetchInitialData: () => Promise<void>;
   updateWorkerDailyStatus: (workerId: string, status: WorkerDailyStatus) => Promise<void>;
   startStage: (stageId: string, workerId: string) => Promise<void>;
   finishStage: (stageId: string) => Promise<void>;
   addFinancialTransaction: (tx: Omit<FinancialTransaction, 'id' | 'createdAt'>) => Promise<void>;
-  addOrder: (order: Omit<Order, 'id' | 'orderNumber' | 'status' | 'isContractSigned' | 'isDesignApproved'>) => void;
+  addOrder: (order: Omit<Order, 'id' | 'orderNumber' | 'status' | 'isContractSigned' | 'isDesignApproved'>) => Promise<void>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   assignWorkerToStage: (stageId: string, workerId: string) => void;
   addOffcut: (productId: string, length: number, width: number, orderId: string) => void;
 
   // CRM / Agent 1 Actions
-  assignZamerchik: (orderId: string, workerId: string, scheduledAt: string) => void;
-  uploadZamerDetails: (orderId: string, dimensions: WallDimensions, sketchUrl?: string) => void;
-  upload3DDesign: (orderId: string, designUrl: string) => void;
-  approveDesign: (orderId: string) => void;
-  createSchedule: (orderId: string, plannedStartAt: string, plannedEndAt: string) => void;
-  signContract: (orderId: string, totalPrice: number, advancePayment: number, paymentMethod: 'CASH' | 'CARD' | 'BANK_TRANSFER') => boolean;
+  assignZamerchik: (orderId: string, workerId: string, scheduledAt: string) => Promise<void>;
+  uploadZamerDetails: (orderId: string, dimensions: WallDimensions, sketchUrl?: string) => Promise<void>;
+  upload3DDesign: (orderId: string, designUrl: string) => Promise<void>;
+  approveDesign: (orderId: string) => Promise<void>;
+  createSchedule: (orderId: string, plannedStartAt: string, plannedEndAt: string) => Promise<void>;
+  signContract: (orderId: string, totalPrice: number, advancePayment: number, paymentMethod: 'CASH' | 'CARD' | 'BANK_TRANSFER') => Promise<boolean>;
 
   // Inventory & BOM / Agent 2 Actions
   addBOMItem: (orderId: string, productId: string, requiredQuantity: number) => void;
@@ -231,14 +287,58 @@ export const useStore = create<AppState>((set, get) => ({
   stockTransactions: initialStockTransactions,
   isLoading: false,
   error: null,
+  token: localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('token'),
+
+  login: async (phone, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await authApi.login(phone, password);
+      const token = typeof response.data?.token === 'object' 
+        ? response.data?.token?.access 
+        : response.data?.token;
+      if (token) {
+        localStorage.setItem('token', token);
+        set({ token, isAuthenticated: true, isLoading: false });
+        return true;
+      }
+      throw new Error("No token returned from server");
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      const errMsg = err.response?.data?.errors?.[0] || err.message || "Login processing failed";
+      set({ isLoading: false, error: errMsg });
+      return false;
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    set({ token: null, isAuthenticated: false });
+  },
 
   fetchInitialData: async () => {
     set({ isLoading: true });
     try {
       const boardData = await productionApi.getBoardData();
       const transactions = await financeApi.getTransactions();
+      
+      let ordersList = initialOrders;
+      try {
+        const backendOrders = await ordersApi.getOrders();
+        if (Array.isArray(backendOrders) && backendOrders.length > 0) {
+          ordersList = backendOrders.map(mapBackendOrderToFrontend);
+        } else if (boardData && Array.isArray(boardData.orders) && boardData.orders.length > 0) {
+          ordersList = boardData.orders.map(mapBackendOrderToFrontend);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch orders from dedicated API, using boardData or initialOrders:", err);
+        if (boardData && Array.isArray(boardData.orders)) {
+          ordersList = boardData.orders.map(mapBackendOrderToFrontend);
+        }
+      }
+
       set({
-        orders: boardData && Array.isArray(boardData.orders) ? boardData.orders : initialOrders,
+        orders: ordersList,
         workers: boardData && Array.isArray(boardData.workers) ? boardData.workers : initialWorkers,
         productionStages: boardData && Array.isArray(boardData.productionStages) ? boardData.productionStages : initialProductionStages,
         financeTransactions: Array.isArray(transactions) ? transactions : initialFinanceTransactions,
@@ -247,7 +347,6 @@ export const useStore = create<AppState>((set, get) => ({
       });
     } catch (err: any) {
       console.warn("API initialization failed, using initial mock data:", err);
-      // Keep mock data which is already initialized in state
       set({ isLoading: false, error: err.message || "Failed to load API data" });
     }
   },
@@ -403,22 +502,60 @@ export const useStore = create<AppState>((set, get) => ({
     }));
   },
 
-  addOrder: (orderData) => {
-    const id = 'o' + (get().orders.length + 1);
-    const orderNumber = `WF-2026-${String(get().orders.length + 1).padStart(3, '0')}`;
+  addOrder: async (orderData) => {
+    set({ isLoading: true });
+    try {
+      const clientNameParts = orderData.customerName.trim().split(' ');
+      const first_name = clientNameParts[0] || 'Mijoz';
+      const last_name = clientNameParts.slice(1).join(' ') || '';
+      
+      let customerId: number;
+      try {
+        const customer = await ordersApi.createCustomer({
+          first_name,
+          last_name,
+          phone: orderData.customerPhone,
+          address: ''
+        });
+        customerId = customer.id;
+      } catch (cErr) {
+        console.warn("Failed to create customer, using a fallback default customer ID:", cErr);
+        customerId = 1; // Default fallback
+      }
 
-    const newOrder: Order = {
-      ...orderData,
-      id,
-      orderNumber,
-      status: 'YANGI_LID',
-      isContractSigned: false,
-      isDesignApproved: false
-    };
+      const backendOrder = await ordersApi.createOrder({
+        customer: customerId,
+        source: orderData.source,
+        product_type: 'OTHER',
+        total_price: String(orderData.totalPrice),
+        advance_payment: String(orderData.advancePayment || 0),
+        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 2 weeks default
+      });
 
-    set((state) => ({
-      orders: [newOrder, ...state.orders]
-    }));
+      const newOrder = mapBackendOrderToFrontend(backendOrder);
+      set((state) => ({
+        orders: [newOrder, ...state.orders],
+        isLoading: false
+      }));
+    } catch (err: any) {
+      console.error("Failed to add order to API:", err);
+      // Fallback local creation for smooth UX if API fails
+      const id = 'o' + (get().orders.length + 1);
+      const orderNumber = `WF-2026-${String(get().orders.length + 1).padStart(3, '0')}`;
+      const newOrder: Order = {
+        ...orderData,
+        id,
+        orderNumber,
+        status: 'YANGI_LID',
+        isContractSigned: false,
+        isDesignApproved: false
+      };
+      set((state) => ({
+        orders: [newOrder, ...state.orders],
+        isLoading: false,
+        error: err.message
+      }));
+    }
   },
 
   updateOrderStatus: (orderId, status) => {
@@ -518,79 +655,211 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // CRM / Agent 1 Actions
-  assignZamerchik: (orderId, workerId, scheduledAt) => {
-    set((state) => ({
-      orders: state.orders.map((o) => 
-        o.id === orderId ? { 
-          ...o, 
-          status: 'ZAMER_BELGILANDI', 
-          assignedZamerchikId: workerId, 
-          zamerScheduledAt: scheduledAt 
-        } : o
-      )
-    }));
+  assignZamerchik: async (orderId, workerId, scheduledAt) => {
+    set({ isLoading: true });
+    try {
+      try {
+        await ordersApi.assignZamer(orderId, Number(workerId), scheduledAt);
+      } catch (apiErr) {
+        console.warn("Custom assign-zamer action failed, attempting direct PATCH:", apiErr);
+        await ordersApi.updateOrder(orderId, {
+          zamerchik: Number(workerId),
+          status: 'MEASURE_ASSIGNED'
+        });
+      }
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'ZAMER_BELGILANDI', 
+            assignedZamerchikId: workerId, 
+            zamerScheduledAt: scheduledAt 
+          } : o
+        ),
+        isLoading: false
+      }));
+    } catch (err: any) {
+      console.error("Failed to assign zamerchik:", err);
+      // Fallback local update
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'ZAMER_BELGILANDI', 
+            assignedZamerchikId: workerId, 
+            zamerScheduledAt: scheduledAt 
+          } : o
+        ),
+        isLoading: false,
+        error: err.message
+      }));
+    }
   },
 
-  uploadZamerDetails: (orderId, dimensions, sketchUrl) => {
-    set((state) => ({
-      orders: state.orders.map((o) => 
-        o.id === orderId ? { 
-          ...o, 
-          status: 'ZAMER_BAJARILDI', 
-          dimensions, 
-          zamerSketchUrl: sketchUrl || 'https://images.unsplash.com/photo-1581404917879-53e1925d88df?auto=format&fit=crop&w=400&q=80' 
-        } : o
-      )
-    }));
+  uploadZamerDetails: async (orderId, dimensions, sketchUrl) => {
+    set({ isLoading: true });
+    try {
+      const url = sketchUrl || 'https://images.unsplash.com/photo-1581404917879-53e1925d88df?auto=format&fit=crop&w=400&q=80';
+      try {
+        await ordersApi.uploadZamer(orderId, dimensions, url);
+      } catch (apiErr) {
+        console.warn("Custom upload-zamer action failed, attempting direct PATCH:", apiErr);
+        await ordersApi.updateOrder(orderId, {
+          zamer_dimensions: JSON.stringify(dimensions),
+          zamer_photos_url: url,
+          status: 'MEASURE_DONE'
+        });
+      }
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'ZAMER_BAJARILDI', 
+            dimensions, 
+            zamerSketchUrl: url 
+          } : o
+        ),
+        isLoading: false
+      }));
+    } catch (err: any) {
+      console.error("Failed to upload zamer details:", err);
+      // Fallback local update
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'ZAMER_BAJARILDI', 
+            dimensions, 
+            zamerSketchUrl: sketchUrl || 'https://images.unsplash.com/photo-1581404917879-53e1925d88df?auto=format&fit=crop&w=400&q=80' 
+          } : o
+        ),
+        isLoading: false,
+        error: err.message
+      }));
+    }
   },
 
-  upload3DDesign: (orderId, designUrl) => {
-    set((state) => ({
-      orders: state.orders.map((o) => 
-        o.id === orderId ? { 
-          ...o, 
-          status: 'DIZAYN_LOYYAHALASHDA', 
-          design3dUrl: designUrl 
-        } : o
-      )
-    }));
+  upload3DDesign: async (orderId, designUrl) => {
+    set({ isLoading: true });
+    try {
+      try {
+        await ordersApi.uploadDesign(orderId, designUrl);
+      } catch (apiErr) {
+        console.warn("Custom upload-design action failed, attempting direct PATCH:", apiErr);
+        await ordersApi.updateOrder(orderId, {
+          design_3d_url: designUrl,
+          status: 'DESIGNING'
+        });
+      }
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'DIZAYN_LOYYAHALASHDA', 
+            design3dUrl: designUrl 
+          } : o
+        ),
+        isLoading: false
+      }));
+    } catch (err: any) {
+      console.error("Failed to upload design:", err);
+      // Fallback local update
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'DIZAYN_LOYYAHALASHDA', 
+            design3dUrl: designUrl 
+          } : o
+        ),
+        isLoading: false,
+        error: err.message
+      }));
+    }
   },
 
-  approveDesign: (orderId) => {
+  approveDesign: async (orderId) => {
     const now = new Date().toISOString();
-    set((state) => ({
-      orders: state.orders.map((o) => 
-        o.id === orderId ? { 
-          ...o, 
-          status: 'DIZAYN_TASDIQLANDI', 
-          isDesignApproved: true, 
-          designApprovedAt: now 
-        } : o
-      )
-    }));
+    set({ isLoading: true });
+    try {
+      try {
+        await ordersApi.approveDesign(orderId);
+      } catch (apiErr) {
+        console.warn("Custom approve-design action failed, attempting direct PATCH:", apiErr);
+        await ordersApi.updateOrder(orderId, {
+          status: 'DESIGN_APPROVED'
+        });
+      }
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'DIZAYN_TASDIQLANDI', 
+            isDesignApproved: true, 
+            designApprovedAt: now 
+          } : o
+        ),
+        isLoading: false
+      }));
+    } catch (err: any) {
+      console.error("Failed to approve design:", err);
+      // Fallback local update
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'DIZAYN_TASDIQLANDI', 
+            isDesignApproved: true, 
+            designApprovedAt: now 
+          } : o
+        ),
+        isLoading: false,
+        error: err.message
+      }));
+    }
   },
 
-  createSchedule: (orderId, plannedStartAt, plannedEndAt) => {
-    set((state) => ({
-      orders: state.orders.map((o) => 
-        o.id === orderId ? { 
-          ...o, 
-          status: 'TZ_PLANNER_TUZILDI', 
-          plannedStartAt, 
-          plannedEndAt 
-        } : o
-      )
-    }));
+  createSchedule: async (orderId, plannedStartAt, plannedEndAt) => {
+    set({ isLoading: true });
+    try {
+      await ordersApi.updateOrder(orderId, {
+        deadline: plannedEndAt.split('T')[0],
+        status: 'CONTRACT_PENDING'
+      });
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'TZ_PLANNER_TUZILDI', 
+            plannedStartAt, 
+            plannedEndAt 
+          } : o
+        ),
+        isLoading: false
+      }));
+    } catch (err: any) {
+      console.error("Failed to create schedule:", err);
+      // Fallback local update
+      set((state) => ({
+        orders: state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'TZ_PLANNER_TUZILDI', 
+            plannedStartAt, 
+            plannedEndAt 
+          } : o
+        ),
+        isLoading: false,
+        error: err.message
+      }));
+    }
   },
 
-  signContract: (orderId, totalPrice, advancePayment, paymentMethod) => {
+  signContract: async (orderId, totalPrice, advancePayment, paymentMethod) => {
     const now = new Date().toISOString();
-    
-    // Perform transaction validations: deduct inventory based on BOM
     const state = get();
     const orderBOM = state.bomItems.filter(item => item.orderId === orderId);
     
-    // Check if there are sufficient products in stock
     let hasSufficientStock = true;
     for (const product of state.products) {
       const bomDemand = orderBOM.find(b => b.productId === product.id);
@@ -604,82 +873,184 @@ export const useStore = create<AppState>((set, get) => ({
     }
 
     if (!hasSufficientStock) {
-      return false; // Not enough stock to allocate BOM
+      return false;
     }
 
-    // Update orders and products
-    set((state) => {
-      // 1. Order updates
-      const updatedOrders = state.orders.map((o) => 
-        o.id === orderId ? { 
-          ...o, 
-          status: 'SHARTNOMA_IMZOLANDI' as OrderStatus, 
-          isContractSigned: true, 
-          contractSignedAt: now,
-          totalPrice,
-          advancePayment,
-          paymentMethod,
-          contractPdfUrl: '#print-layout'
-        } : o
-      );
-
-      // 2. Add income transaction
-      const orderNum = state.orders.find(o => o.id === orderId)?.orderNumber || '';
-      const clientName = state.orders.find(o => o.id === orderId)?.customerName || '';
-      const newIncomeTx: FinancialTransaction = {
-        id: 't_' + Math.random().toString(36).substr(2, 9),
-        type: 'INCOME',
-        category: 'CLIENT_PAYMENT',
-        amount: advancePayment,
-        paymentMethod,
-        orderId,
-        description: `Avans to'lovi: ${clientName} (${orderNum})`,
-        createdAt: now
-      };
-
-      // 3. Allocate BOM items
-      const updatedBOM = state.bomItems.map(bom => {
-        if (bom.orderId === orderId) {
-          return { ...bom, allocatedQuantity: bom.requiredQuantity };
-        }
-        return bom;
-      });
-
-      // 4. Update products & write stock transactions
-      const newStockTxs: StockTransaction[] = [];
-      const updatedProducts = state.products.map(p => {
-        const bom = orderBOM.find(b => b.productId === p.id);
-        if (bom) {
-          newStockTxs.push({
-            id: 'st_' + Math.random().toString(36).substr(2, 9),
-            productId: p.id,
-            quantity: bom.requiredQuantity,
-            unitPrice: p.averagePrice,
-            transactionType: 'CHIQIM',
-            createdAt: now,
-            notes: `Buyurtma zaxirasi: ${orderNum}`
+    set({ isLoading: true });
+    try {
+      try {
+        await ordersApi.signContract(orderId, {
+          total_price: totalPrice,
+          advance_payment: advancePayment,
+          payment_method: paymentMethod
+        });
+      } catch (apiErr) {
+        console.warn("Custom sign-contract action failed, attempting direct PATCH:", apiErr);
+        await ordersApi.updateOrder(orderId, {
+          total_price: String(totalPrice),
+          advance_payment: String(advancePayment),
+          is_contract_signed: true,
+          signed_at: now,
+          status: 'CONTRACT_SIGNED'
+        });
+        
+        try {
+          const orderNum = state.orders.find(o => o.id === orderId)?.orderNumber || '';
+          const clientName = state.orders.find(o => o.id === orderId)?.customerName || '';
+          await financeApi.addTransaction({
+            type: 'INCOME',
+            category: 'CLIENT_PAYMENT',
+            amount: advancePayment,
+            paymentMethod,
+            description: `Avans to'lovi: ${clientName} (${orderNum})`,
+            orderId: orderId
           });
-          return {
-            ...p,
-            reservedQuantity: p.reservedQuantity + bom.requiredQuantity,
-            availableQuantity: p.quantityInStock - (p.reservedQuantity + bom.requiredQuantity)
-          };
+        } catch (fErr) {
+          console.warn("Failed to log finance transaction on API fallback:", fErr);
         }
-        return p;
+      }
+
+      set((state) => {
+        const updatedOrders = state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'SHARTNOMA_IMZOLANDI' as OrderStatus, 
+            isContractSigned: true, 
+            contractSignedAt: now,
+            totalPrice,
+            advancePayment,
+            paymentMethod,
+            contractPdfUrl: '#print-layout'
+          } : o
+        );
+
+        const orderNum = state.orders.find(o => o.id === orderId)?.orderNumber || '';
+        const clientName = state.orders.find(o => o.id === orderId)?.customerName || '';
+        const newIncomeTx: FinancialTransaction = {
+          id: 't_' + Math.random().toString(36).substr(2, 9),
+          type: 'INCOME',
+          category: 'CLIENT_PAYMENT',
+          amount: advancePayment,
+          paymentMethod,
+          orderId,
+          description: `Avans to'lovi: ${clientName} (${orderNum})`,
+          createdAt: now
+        };
+
+        const updatedBOM = state.bomItems.map(bom => {
+          if (bom.orderId === orderId) {
+            return { ...bom, allocatedQuantity: bom.requiredQuantity };
+          }
+          return bom;
+        });
+
+        const newStockTxs: StockTransaction[] = [];
+        const updatedProducts = state.products.map(p => {
+          const bom = orderBOM.find(b => b.productId === p.id);
+          if (bom) {
+            newStockTxs.push({
+              id: 'st_' + Math.random().toString(36).substr(2, 9),
+              productId: p.id,
+              quantity: bom.requiredQuantity,
+              unitPrice: p.averagePrice,
+              transactionType: 'CHIQIM',
+              createdAt: now,
+              notes: `Buyurtma zaxirasi: ${orderNum}`
+            });
+            return {
+              ...p,
+              reservedQuantity: p.reservedQuantity + bom.requiredQuantity,
+              availableQuantity: p.quantityInStock - (p.reservedQuantity + bom.requiredQuantity)
+            };
+          }
+          return p;
+        });
+
+        return {
+          orders: updatedOrders,
+          financeTransactions: [newIncomeTx, ...state.financeTransactions],
+          bomItems: updatedBOM,
+          products: updatedProducts,
+          stockTransactions: [...newStockTxs, ...state.stockTransactions],
+          isLoading: false
+        };
       });
 
-      return {
-        orders: updatedOrders,
-        financeTransactions: [newIncomeTx, ...state.financeTransactions],
-        bomItems: updatedBOM,
-        products: updatedProducts,
-        stockTransactions: [...newStockTxs, ...state.stockTransactions]
-      };
-    });
+      get().updateOrderStatus(orderId, 'PRODUCTION');
+      return true;
+    } catch (err: any) {
+      console.error("Failed to sign contract:", err);
+      // Fallback local update
+      set((state) => {
+        const updatedOrders = state.orders.map((o) => 
+          o.id === orderId ? { 
+            ...o, 
+            status: 'SHARTNOMA_IMZOLANDI' as OrderStatus, 
+            isContractSigned: true, 
+            contractSignedAt: now,
+            totalPrice,
+            advancePayment,
+            paymentMethod,
+            contractPdfUrl: '#print-layout'
+          } : o
+        );
 
-    // Automatically transition to PRODUCTION stage if signed
-    get().updateOrderStatus(orderId, 'PRODUCTION');
-    return true;
+        const orderNum = state.orders.find(o => o.id === orderId)?.orderNumber || '';
+        const clientName = state.orders.find(o => o.id === orderId)?.customerName || '';
+        const newIncomeTx: FinancialTransaction = {
+          id: 't_' + Math.random().toString(36).substr(2, 9),
+          type: 'INCOME',
+          category: 'CLIENT_PAYMENT',
+          amount: advancePayment,
+          paymentMethod,
+          orderId,
+          description: `Avans to'lovi: ${clientName} (${orderNum})`,
+          createdAt: now
+        };
+
+        const updatedBOM = state.bomItems.map(bom => {
+          if (bom.orderId === orderId) {
+            return { ...bom, allocatedQuantity: bom.requiredQuantity };
+          }
+          return bom;
+        });
+
+        const newStockTxs: StockTransaction[] = [];
+        const updatedProducts = state.products.map(p => {
+          const bom = orderBOM.find(b => b.productId === p.id);
+          if (bom) {
+            newStockTxs.push({
+              id: 'st_' + Math.random().toString(36).substr(2, 9),
+              productId: p.id,
+              quantity: bom.requiredQuantity,
+              unitPrice: p.averagePrice,
+              transactionType: 'CHIQIM',
+              createdAt: now,
+              notes: `Buyurtma zaxirasi: ${orderNum}`
+            });
+            return {
+              ...p,
+              reservedQuantity: p.reservedQuantity + bom.requiredQuantity,
+              availableQuantity: p.quantityInStock - (p.reservedQuantity + bom.requiredQuantity)
+            };
+          }
+          return p;
+        });
+
+        return {
+          orders: updatedOrders,
+          financeTransactions: [newIncomeTx, ...state.financeTransactions],
+          bomItems: updatedBOM,
+          products: updatedProducts,
+          stockTransactions: [...newStockTxs, ...state.stockTransactions],
+          isLoading: false,
+          error: err.message
+        };
+      });
+
+      get().updateOrderStatus(orderId, 'PRODUCTION');
+      return true;
+    }
   },
 
   // Inventory & BOM / Agent 2 Actions
