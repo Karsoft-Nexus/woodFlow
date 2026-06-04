@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { FinancialTransaction, WorkerDailyStatus, Order, Worker, ProductionStage, Material, MaterialCategory, Offcut, BOM, PaginatedResponse } from '../types';
+import type { FinancialTransaction, WorkerDailyStatus, Order, Worker, ProductionStage, Material, MaterialCategory, Offcut, BOM, PaginatedResponse, Unit } from '../types';
 
 // API client instance
 export const api = axios.create({
@@ -75,6 +75,10 @@ export const financeApi = {
 };
 
 export const warehouseApi = {
+  getUnits: async () => {
+    const response = await api.get<PaginatedResponse<Unit>>('/units');
+    return response.data;
+  },
   getCategories: async () => {
     const response = await api.get<PaginatedResponse<MaterialCategory>>('/categories');
     return response.data;

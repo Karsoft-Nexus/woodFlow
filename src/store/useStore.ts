@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction, WallDimensions, Material, MaterialCategory, Offcut, BOM } from '../types';
+import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction, WallDimensions, Material, MaterialCategory, Offcut, BOM, Unit } from '../types';
 import { productionApi, financeApi, warehouseApi, bomApi } from '../api';
 
 interface AppState {
@@ -14,6 +14,7 @@ interface AppState {
   // Real API States (Agent 2)
   apiMaterials: Material[];
   apiCategories: MaterialCategory[];
+  apiUnits: Unit[];
   apiOffcuts: Offcut[];
   apiBOMs: BOM[];
   
@@ -245,6 +246,7 @@ export const useStore = create<AppState>((set, get) => ({
   
   apiMaterials: [],
   apiCategories: [],
+  apiUnits: [],
   apiOffcuts: [],
   apiBOMs: [],
   
@@ -762,14 +764,16 @@ export const useStore = create<AppState>((set, get) => ({
   fetchInventoryAPI: async () => {
     set({ isLoading: true, error: null });
     try {
-      const [materialsRes, categoriesRes, offcutsRes] = await Promise.all([
+      const [materialsRes, categoriesRes, offcutsRes, unitsRes] = await Promise.all([
         warehouseApi.getMaterials(),
         warehouseApi.getCategories(),
-        warehouseApi.getOffcuts()
+        warehouseApi.getOffcuts(),
+        warehouseApi.getUnits()
       ]);
       set({ 
         apiMaterials: materialsRes.results || [], 
         apiCategories: categoriesRes.results || [],
+        apiUnits: unitsRes.results || [],
         apiOffcuts: offcutsRes.results || [],
         isLoading: false 
       });

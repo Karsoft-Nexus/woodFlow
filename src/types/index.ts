@@ -105,6 +105,12 @@ export interface MaterialCategory {
   name: string;
 }
 
+export interface Unit {
+  id: number;
+  name: string;
+  short_name: string;
+}
+
 export interface Material {
   id: number;
   name: string;
@@ -116,6 +122,7 @@ export interface Material {
   low_stock_threshold: string;
   unit_price: string;
   category: number;
+  unit: number;
 }
 
 export interface Offcut {

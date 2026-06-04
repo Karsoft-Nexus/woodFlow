@@ -13,6 +13,7 @@ export const InventoryBOM: React.FC = () => {
   const { 
     apiMaterials, 
     apiCategories,
+    apiUnits,
     apiOffcuts,
     apiBOMs,
     orders,
@@ -39,6 +40,7 @@ export const InventoryBOM: React.FC = () => {
   const [txForm, setTxForm] = useState({
     name: '',
     categoryId: 0,
+    unitId: 0,
     quantity: 10,
     unitPrice: 10000,
     low_stock_threshold: 5,
@@ -70,10 +72,16 @@ export const InventoryBOM: React.FC = () => {
   const handleStockTxSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!txForm.name) return;
+    
+    if (!txForm.categoryId || !txForm.unitId) {
+      alert("Kategoriya va Birlikni tanlash shart!");
+      return;
+    }
 
     await createMaterialAPI({
       name: txForm.name,
       category: Number(txForm.categoryId),
+      unit: Number(txForm.unitId),
       quantity: String(txForm.quantity),
       unit_price: String(txForm.unitPrice),
       low_stock_threshold: String(txForm.low_stock_threshold),
@@ -84,6 +92,7 @@ export const InventoryBOM: React.FC = () => {
     setTxForm({
       name: '',
       categoryId: apiCategories[0]?.id || 0,
+      unitId: apiUnits[0]?.id || 0,
       quantity: 10,
       unitPrice: 10000,
       low_stock_threshold: 5,
@@ -521,6 +530,20 @@ export const InventoryBOM: React.FC = () => {
                   <option value={0}>Tanlang</option>
                   {apiCategories.map(cat => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">O'lchov Birligi</label>
+                <select 
+                  value={txForm.unitId}
+                  onChange={e => setTxForm({...txForm, unitId: Number(e.target.value)})}
+                  className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
+                >
+                  <option value={0}>Tanlang</option>
+                  {apiUnits.map(unit => (
+                    <option key={unit.id} value={unit.id}>{unit.name} ({unit.short_name})</option>
                   ))}
                 </select>
               </div>
