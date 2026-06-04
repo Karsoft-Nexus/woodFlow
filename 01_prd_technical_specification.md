@@ -1,4 +1,4 @@
-# 🪵 WoodFlow ERP: Mebel Ishlab Chiqarishni Boshqarish Tizimi
+# 🪵  : Mebel Ishlab Chiqarishni Boshqarish Tizimi
 ## Texnik Topshiriq (PRD - Product Requirement Document)
 
 > **Loyiha Menejeri:** Neo (AI PM)  

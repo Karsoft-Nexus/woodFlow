@@ -62,13 +62,13 @@ export interface Order {
 // ==========================================================================
 // 2. INVENTORY & BOM TYPES
 // ==========================================================================
-export type ProductCategory = 'PLATES' | 'EDGES' | 'ACCESSORIES' | 'WEIGHT_ITEMS';
+export type ProductCategory = 'PLATES' | 'STOLISHNITSA' | 'EDGES' | 'FURNITURES' | 'ACCESSORIES' | 'WEIGHT_ITEMS' | 'GLASS';
 
 export interface Product {
   id: string;
   name: string;
   category: ProductCategory;
-  unitOfMeasure: 'LIST' | 'METR' | 'PIECE' | 'KG';
+  unitOfMeasure: 'LIST' | 'METR' | 'PIECE' | 'KG' | 'M_KV';
   quantityInStock: number;
   reservedQuantity: number;
   availableQuantity: number; // quantityInStock - reservedQuantity

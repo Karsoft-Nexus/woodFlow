@@ -53,3 +53,37 @@ body {
 .animate-pulse-red {
   animation: pulse-red 2s infinite;
 }
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  /* Hide everything */
+  body > div, aside, main, header, button, nav {
+    display: none !important;
+  }
+  /* Show only the contract printing container */
+  #print-contract-container {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+    color: black;
+    font-family: serif;
+    padding: 40px;
+    font-size: 14px;
+    line-height: 1.6;
+    visibility: visible;
+  }
+  #print-contract-container * {
+    visibility: visible;
+  }
+}
+
+#print-contract-container {
+  display: none;
+}
+

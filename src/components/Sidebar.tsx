@@ -5,11 +5,15 @@ import {
   LayoutDashboard, 
   Smartphone, 
   Wallet, 
-  Hammer 
+  Hammer,
+  Users,
+  Package
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const menuItems = [
+    { to: '/orders', label: 'CRM & Orders', icon: <Users className="w-4 h-4" /> },
+    { to: '/inventory', label: 'Inventory & BOM', icon: <Package className="w-4 h-4" /> },
     { to: '/', label: 'Kanban Board', icon: <Columns className="w-4 h-4" /> },
     { to: '/dashboard', label: 'Manager Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { to: '/tablet', label: 'Worker Tablet', icon: <Smartphone className="w-4 h-4" /> },
@@ -18,6 +22,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="w-64 bg-brand-surface border-r border-brand-border flex flex-col h-screen select-none">
+
       {/* Brand Header */}
       <div className="h-16 flex items-center gap-3 px-6 border-b border-brand-border">
         <div className="p-1.5 bg-brand-emerald/10 text-brand-emerald rounded-lg">
@@ -51,8 +56,9 @@ export const Sidebar: React.FC = () => {
 
       {/* Footer Info */}
       <div className="p-4 border-t border-brand-border text-[10px] text-slate-500 font-mono text-center">
-        v1.0.0-beta • Agent 3 Edition
+        v1.0.0 • Complete ERP Edition
       </div>
     </aside>
+
   );
 };

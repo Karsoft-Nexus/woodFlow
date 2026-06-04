@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction } from '../types';
+import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction, WallDimensions } from '../types';
 import { productionApi, financeApi } from '../api';
 
 interface AppState {
@@ -19,10 +19,23 @@ interface AppState {
   startStage: (stageId: string, workerId: string) => Promise<void>;
   finishStage: (stageId: string) => Promise<void>;
   addFinancialTransaction: (tx: Omit<FinancialTransaction, 'id' | 'createdAt'>) => Promise<void>;
-  addOrder: (order: Order) => void;
+  addOrder: (order: Omit<Order, 'id' | 'orderNumber' | 'status' | 'isContractSigned' | 'isDesignApproved'>) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   assignWorkerToStage: (stageId: string, workerId: string) => void;
   addOffcut: (productId: string, length: number, width: number, orderId: string) => void;
+
+  // CRM / Agent 1 Actions
+  assignZamerchik: (orderId: string, workerId: string, scheduledAt: string) => void;
+  uploadZamerDetails: (orderId: string, dimensions: WallDimensions, sketchUrl?: string) => void;
+  upload3DDesign: (orderId: string, designUrl: string) => void;
+  approveDesign: (orderId: string) => void;
+  createSchedule: (orderId: string, plannedStartAt: string, plannedEndAt: string) => void;
+  signContract: (orderId: string, totalPrice: number, advancePayment: number, paymentMethod: 'CASH' | 'CARD' | 'BANK_TRANSFER') => boolean;
+
+  // Inventory & BOM / Agent 2 Actions
+  addBOMItem: (orderId: string, productId: string, requiredQuantity: number) => void;
+  removeBOMItem: (bomItemId: string) => void;
+  addStockTransaction: (tx: Omit<StockTransaction, 'id' | 'createdAt'>) => void;
 }
 
 // Initial Mock Data
@@ -43,12 +56,13 @@ const initialProducts: Product[] = [
   { id: 'p1', name: 'L DSP Rossiya 2.5x1.83m Oq', category: 'PLATES', unitOfMeasure: 'LIST', quantityInStock: 45, reservedQuantity: 15, availableQuantity: 30, averagePrice: 350000, minThreshold: 10 },
   { id: 'p2', name: 'MDF Akril Turkiya Kulrang', category: 'PLATES', unitOfMeasure: 'LIST', quantityInStock: 25, reservedQuantity: 8, availableQuantity: 17, averagePrice: 650000, minThreshold: 5 },
   { id: 'p3', name: 'Kromka 19/0.4 PVC', category: 'EDGES', unitOfMeasure: 'METR', quantityInStock: 450, reservedQuantity: 120, availableQuantity: 330, averagePrice: 3500, minThreshold: 100 },
-  { id: 'p4', name: 'Kromka 21/1 Premium Glossy', category: 'EDGES', unitOfMeasure: 'METR', quantityInStock: 300, reservedQuantity: 80, availableQuantity: 220, averagePrice: 6000, minThreshold: 50 },
-  { id: 'p5', name: 'Topsa (Petlya) Blum soft-close', category: 'ACCESSORIES', unitOfMeasure: 'PIECE', quantityInStock: 180, reservedQuantity: 48, availableQuantity: 132, averagePrice: 25000, minThreshold: 30 },
-  { id: 'p6', name: 'Evro shrup 7x50', category: 'ACCESSORIES', unitOfMeasure: 'PIECE', quantityInStock: 2500, reservedQuantity: 600, availableQuantity: 1900, averagePrice: 400, minThreshold: 500 },
+  { id: 'p4', name: 'Stolishnitsa Rossiya 3m', category: 'STOLISHNITSA', unitOfMeasure: 'PIECE', quantityInStock: 20, reservedQuantity: 5, availableQuantity: 15, averagePrice: 450000, minThreshold: 5 },
+  { id: 'p5', name: 'Topsa (Petlya) Blum soft-close', category: 'FURNITURES', unitOfMeasure: 'PIECE', quantityInStock: 180, reservedQuantity: 48, availableQuantity: 132, averagePrice: 25000, minThreshold: 30 },
+  { id: 'p6', name: 'Evro shrup 7x50', category: 'FURNITURES', unitOfMeasure: 'PIECE', quantityInStock: 2500, reservedQuantity: 600, availableQuantity: 1900, averagePrice: 400, minThreshold: 500 },
   { id: 'p7', name: 'Rushka Kishmish Matte Black', category: 'ACCESSORIES', unitOfMeasure: 'PIECE', quantityInStock: 120, reservedQuantity: 32, availableQuantity: 88, averagePrice: 18000, minThreshold: 20 },
   { id: 'p8', name: 'Porshun (Gazlift) 80N', category: 'ACCESSORIES', unitOfMeasure: 'PIECE', quantityInStock: 8, reservedQuantity: 6, availableQuantity: 2, averagePrice: 15000, minThreshold: 10 },
-  { id: 'p9', name: 'Yelim (Glue) Kleiberit', category: 'WEIGHT_ITEMS', unitOfMeasure: 'KG', quantityInStock: 35, reservedQuantity: 10, availableQuantity: 25, averagePrice: 75000, minThreshold: 8 }
+  { id: 'p9', name: 'Yelim (Glue) Kleiberit', category: 'WEIGHT_ITEMS', unitOfMeasure: 'KG', quantityInStock: 35, reservedQuantity: 10, availableQuantity: 25, averagePrice: 75000, minThreshold: 8 },
+  { id: 'p10', name: 'Oyna (Zerkalo) 4mm', category: 'GLASS', unitOfMeasure: 'M_KV', quantityInStock: 15, reservedQuantity: 2, availableQuantity: 13, averagePrice: 120000, minThreshold: 5 }
 ];
 
 const initialOrders: Order[] = [
@@ -68,7 +82,17 @@ const initialOrders: Order[] = [
     plannedEndAt: '2026-06-08T18:00:00Z',
     actualStartAt: '2026-06-02T09:30:00Z',
     isDesignApproved: true,
-    designApprovedAt: '2026-06-01T09:00:00Z'
+    designApprovedAt: '2026-06-01T09:00:00Z',
+    dimensions: {
+      length: 4.2,
+      width: 3.5,
+      height: 2.8,
+      has90DegreeCorners: true,
+      hasGasPipes: true,
+      hasWaterPipes: true,
+      hasElectricalOutlets: true
+    },
+    design3dUrl: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'o2',
@@ -82,7 +106,18 @@ const initialOrders: Order[] = [
     isContractSigned: false,
     plannedStartAt: '2026-06-03T08:00:00Z',
     plannedEndAt: '2026-06-12T18:00:00Z',
-    isDesignApproved: false
+    isDesignApproved: false,
+    assignedZamerchikId: 'w5',
+    zamerScheduledAt: '2026-06-02T14:00:00Z',
+    dimensions: {
+      length: 3.8,
+      width: 2.5,
+      height: 2.7,
+      has90DegreeCorners: false,
+      hasGasPipes: false,
+      hasWaterPipes: true,
+      hasElectricalOutlets: true
+    }
   },
   {
     id: 'o3',
@@ -112,7 +147,17 @@ const initialOrders: Order[] = [
     plannedEndAt: '2026-06-05T18:00:00Z',
     actualStartAt: '2026-06-03T09:00:00Z',
     isDesignApproved: true,
-    designApprovedAt: '2026-06-02T10:00:00Z'
+    designApprovedAt: '2026-06-02T10:00:00Z',
+    dimensions: {
+      length: 3.0,
+      width: 2.0,
+      height: 2.6,
+      has90DegreeCorners: true,
+      hasGasPipes: false,
+      hasWaterPipes: true,
+      hasElectricalOutlets: true
+    },
+    design3dUrl: 'https://images.unsplash.com/photo-1565183997392-2f6f122e5912?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'o5',
@@ -136,15 +181,13 @@ const initialOrders: Order[] = [
 ];
 
 const initialBOMItems: BOMItem[] = [
-  // BOM for Order 1 (o1)
-  { id: 'b1_1', orderId: 'o1', productId: 'p1', requiredQuantity: 5, allocatedQuantity: 5, unitPriceAtReservation: 350000 },
-  { id: 'b1_2', orderId: 'o1', productId: 'p3', requiredQuantity: 40, allocatedQuantity: 40, unitPriceAtReservation: 3500 },
-  { id: 'b1_3', orderId: 'o1', productId: 'p5', requiredQuantity: 16, allocatedQuantity: 16, unitPriceAtReservation: 25000 },
-  
-  // BOM for Order 4 (o4)
-  { id: 'b4_1', orderId: 'o4', productId: 'p2', requiredQuantity: 3, allocatedQuantity: 3, unitPriceAtReservation: 650000 },
-  { id: 'b4_2', orderId: 'o4', productId: 'p3', requiredQuantity: 20, allocatedQuantity: 20, unitPriceAtReservation: 3500 },
-  { id: 'b4_3', orderId: 'o4', productId: 'p7', requiredQuantity: 8, allocatedQuantity: 8, unitPriceAtReservation: 18000 }
+  { id: 'b1', orderId: 'o1', productId: 'p1', requiredQuantity: 10, allocatedQuantity: 10, unitPriceAtReservation: 350000 },
+  { id: 'b2', orderId: 'o1', productId: 'p3', requiredQuantity: 120, allocatedQuantity: 120, unitPriceAtReservation: 3500 },
+  { id: 'b3', orderId: 'o1', productId: 'p5', requiredQuantity: 24, allocatedQuantity: 24, unitPriceAtReservation: 25000 },
+  { id: 'b4', orderId: 'o1', productId: 'p6', requiredQuantity: 400, allocatedQuantity: 400, unitPriceAtReservation: 400 },
+  { id: 'b5', orderId: 'o4', productId: 'p2', requiredQuantity: 5, allocatedQuantity: 5, unitPriceAtReservation: 650000 },
+  { id: 'b6', orderId: 'o4', productId: 'p4', requiredQuantity: 50, allocatedQuantity: 50, unitPriceAtReservation: 6000 },
+  { id: 'b7', orderId: 'o4', productId: 'p5', requiredQuantity: 12, allocatedQuantity: 12, unitPriceAtReservation: 25000 }
 ];
 
 const initialProductionStages: ProductionStage[] = [
@@ -172,12 +215,13 @@ const initialFinanceTransactions: FinancialTransaction[] = [
 ];
 
 const initialStockTransactions: StockTransaction[] = [
-  { id: 'st1', productId: 'p1', quantity: 15, unitPrice: 350000, transactionType: 'CHIQIM', createdAt: '2026-06-02T09:30:00Z', notes: 'Zaxiradagi materiallar chegirildi (Order: o1)' },
-  { id: 'st2', productId: 'p3', quantity: 120, unitPrice: 3500, transactionType: 'CHIQIM', createdAt: '2026-06-02T09:30:00Z', notes: 'Zaxiradagi materiallar chegirildi (Order: o1)' },
-  { id: 'st3', productId: 'p1', quantity: 50, unitPrice: 340000, transactionType: 'KIRIM', createdAt: '2026-05-30T10:00:00Z', notes: 'Omborga kirim (MebelAlimPlas)' }
+  { id: 'st1', productId: 'p1', quantity: 60, unitPrice: 350000, transactionType: 'KIRIM', createdAt: '2026-05-20T10:00:00Z', notes: 'Boshlang\'ich ombor kirimi' },
+  { id: 'st2', productId: 'p3', quantity: 600, unitPrice: 3500, transactionType: 'KIRIM', createdAt: '2026-05-20T10:00:00Z', notes: 'Boshlang\'ich ombor kirimi' },
+  { id: 'st3', productId: 'p5', quantity: 250, unitPrice: 25000, transactionType: 'KIRIM', createdAt: '2026-05-20T10:00:00Z', notes: 'Boshlang\'ich ombor kirimi' },
+  { id: 'st4', productId: 'p1', quantity: 15, unitPrice: 350000, transactionType: 'CHIQIM', createdAt: '2026-06-01T10:30:00Z', notes: 'Buyurtma: WF-2026-001' }
 ];
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
   orders: initialOrders,
   workers: initialWorkers,
   productionStages: initialProductionStages,
@@ -359,9 +403,21 @@ export const useStore = create<AppState>((set) => ({
     }));
   },
 
-  addOrder: (order) => {
+  addOrder: (orderData) => {
+    const id = 'o' + (get().orders.length + 1);
+    const orderNumber = `WF-2026-${String(get().orders.length + 1).padStart(3, '0')}`;
+
+    const newOrder: Order = {
+      ...orderData,
+      id,
+      orderNumber,
+      status: 'YANGI_LID',
+      isContractSigned: false,
+      isDesignApproved: false
+    };
+
     set((state) => ({
-      orders: [order, ...state.orders],
+      orders: [newOrder, ...state.orders]
     }));
   },
 
@@ -453,6 +509,226 @@ export const useStore = create<AppState>((set) => ({
         }
         return p;
       });
+
+      return {
+        products: updatedProducts,
+        stockTransactions: [newTx, ...state.stockTransactions]
+      };
+    });
+  },
+
+  // CRM / Agent 1 Actions
+  assignZamerchik: (orderId, workerId, scheduledAt) => {
+    set((state) => ({
+      orders: state.orders.map((o) => 
+        o.id === orderId ? { 
+          ...o, 
+          status: 'ZAMER_BELGILANDI', 
+          assignedZamerchikId: workerId, 
+          zamerScheduledAt: scheduledAt 
+        } : o
+      )
+    }));
+  },
+
+  uploadZamerDetails: (orderId, dimensions, sketchUrl) => {
+    set((state) => ({
+      orders: state.orders.map((o) => 
+        o.id === orderId ? { 
+          ...o, 
+          status: 'ZAMER_BAJARILDI', 
+          dimensions, 
+          zamerSketchUrl: sketchUrl || 'https://images.unsplash.com/photo-1581404917879-53e1925d88df?auto=format&fit=crop&w=400&q=80' 
+        } : o
+      )
+    }));
+  },
+
+  upload3DDesign: (orderId, designUrl) => {
+    set((state) => ({
+      orders: state.orders.map((o) => 
+        o.id === orderId ? { 
+          ...o, 
+          status: 'DIZAYN_LOYYAHALASHDA', 
+          design3dUrl: designUrl 
+        } : o
+      )
+    }));
+  },
+
+  approveDesign: (orderId) => {
+    const now = new Date().toISOString();
+    set((state) => ({
+      orders: state.orders.map((o) => 
+        o.id === orderId ? { 
+          ...o, 
+          status: 'DIZAYN_TASDIQLANDI', 
+          isDesignApproved: true, 
+          designApprovedAt: now 
+        } : o
+      )
+    }));
+  },
+
+  createSchedule: (orderId, plannedStartAt, plannedEndAt) => {
+    set((state) => ({
+      orders: state.orders.map((o) => 
+        o.id === orderId ? { 
+          ...o, 
+          status: 'TZ_PLANNER_TUZILDI', 
+          plannedStartAt, 
+          plannedEndAt 
+        } : o
+      )
+    }));
+  },
+
+  signContract: (orderId, totalPrice, advancePayment, paymentMethod) => {
+    const now = new Date().toISOString();
+    
+    // Perform transaction validations: deduct inventory based on BOM
+    const state = get();
+    const orderBOM = state.bomItems.filter(item => item.orderId === orderId);
+    
+    // Check if there are sufficient products in stock
+    let hasSufficientStock = true;
+    for (const product of state.products) {
+      const bomDemand = orderBOM.find(b => b.productId === product.id);
+      if (bomDemand) {
+        const required = bomDemand.requiredQuantity;
+        if (product.availableQuantity < required) {
+          hasSufficientStock = false;
+          break;
+        }
+      }
+    }
+
+    if (!hasSufficientStock) {
+      return false; // Not enough stock to allocate BOM
+    }
+
+    // Update orders and products
+    set((state) => {
+      // 1. Order updates
+      const updatedOrders = state.orders.map((o) => 
+        o.id === orderId ? { 
+          ...o, 
+          status: 'SHARTNOMA_IMZOLANDI' as OrderStatus, 
+          isContractSigned: true, 
+          contractSignedAt: now,
+          totalPrice,
+          advancePayment,
+          paymentMethod,
+          contractPdfUrl: '#print-layout'
+        } : o
+      );
+
+      // 2. Add income transaction
+      const orderNum = state.orders.find(o => o.id === orderId)?.orderNumber || '';
+      const clientName = state.orders.find(o => o.id === orderId)?.customerName || '';
+      const newIncomeTx: FinancialTransaction = {
+        id: 't_' + Math.random().toString(36).substr(2, 9),
+        type: 'INCOME',
+        category: 'CLIENT_PAYMENT',
+        amount: advancePayment,
+        paymentMethod,
+        orderId,
+        description: `Avans to'lovi: ${clientName} (${orderNum})`,
+        createdAt: now
+      };
+
+      // 3. Allocate BOM items
+      const updatedBOM = state.bomItems.map(bom => {
+        if (bom.orderId === orderId) {
+          return { ...bom, allocatedQuantity: bom.requiredQuantity };
+        }
+        return bom;
+      });
+
+      // 4. Update products & write stock transactions
+      const newStockTxs: StockTransaction[] = [];
+      const updatedProducts = state.products.map(p => {
+        const bom = orderBOM.find(b => b.productId === p.id);
+        if (bom) {
+          newStockTxs.push({
+            id: 'st_' + Math.random().toString(36).substr(2, 9),
+            productId: p.id,
+            quantity: bom.requiredQuantity,
+            unitPrice: p.averagePrice,
+            transactionType: 'CHIQIM',
+            createdAt: now,
+            notes: `Buyurtma zaxirasi: ${orderNum}`
+          });
+          return {
+            ...p,
+            reservedQuantity: p.reservedQuantity + bom.requiredQuantity,
+            availableQuantity: p.quantityInStock - (p.reservedQuantity + bom.requiredQuantity)
+          };
+        }
+        return p;
+      });
+
+      return {
+        orders: updatedOrders,
+        financeTransactions: [newIncomeTx, ...state.financeTransactions],
+        bomItems: updatedBOM,
+        products: updatedProducts,
+        stockTransactions: [...newStockTxs, ...state.stockTransactions]
+      };
+    });
+
+    // Automatically transition to PRODUCTION stage if signed
+    get().updateOrderStatus(orderId, 'PRODUCTION');
+    return true;
+  },
+
+  // Inventory & BOM / Agent 2 Actions
+  addBOMItem: (orderId, productId, requiredQuantity) => {
+    set((state) => {
+      const product = state.products.find(p => p.id === productId);
+      const newBOM: BOMItem = {
+        id: 'b_' + Math.random().toString(36).substr(2, 9),
+        orderId,
+        productId,
+        requiredQuantity,
+        allocatedQuantity: 0,
+        unitPriceAtReservation: product?.averagePrice || 0
+      };
+      return {
+        bomItems: [...state.bomItems, newBOM]
+      };
+    });
+  },
+
+  removeBOMItem: (bomItemId) => {
+    set((state) => ({
+      bomItems: state.bomItems.filter(item => item.id !== bomItemId)
+    }));
+  },
+
+  addStockTransaction: (tx) => {
+    const now = new Date().toISOString();
+    const id = 'st_' + Math.random().toString(36).substr(2, 9);
+    
+    set((state) => {
+      const updatedProducts = state.products.map(p => {
+        if (p.id === tx.productId) {
+          const qtyDiff = tx.transactionType === 'KIRIM' ? tx.quantity : -tx.quantity;
+          const newQty = Math.max(0, p.quantityInStock + qtyDiff);
+          return {
+            ...p,
+            quantityInStock: newQty,
+            availableQuantity: newQty - p.reservedQuantity
+          };
+        }
+        return p;
+      });
+
+      const newTx: StockTransaction = {
+        ...tx,
+        id,
+        createdAt: now
+      };
 
       return {
         products: updatedProducts,
