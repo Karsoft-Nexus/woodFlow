@@ -4,6 +4,8 @@ import { KanbanBoard } from './pages/production/KanbanBoard';
 import { ManagerDashboard } from './pages/production/ManagerDashboard';
 import { WorkerTablet } from './pages/worker/WorkerTablet';
 import { FinanceLedger } from './pages/finance/FinanceLedger';
+import { OrdersCRM } from './pages/orders/OrdersCRM';
+import { InventoryBOM } from './pages/inventory/InventoryBOM';
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
         {/* Content Viewport */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-brand-dark">
           <Routes>
+            <Route path="/orders" element={<OrdersCRM />} />
+            <Route path="/inventory" element={<InventoryBOM />} />
             <Route path="/" element={<KanbanBoard />} />
             <Route path="/dashboard" element={<ManagerDashboard />} />
             <Route path="/tablet" element={<WorkerTablet />} />
@@ -26,4 +30,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;
