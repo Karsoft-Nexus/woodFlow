@@ -41,10 +41,12 @@ export const InventoryBOM: React.FC = () => {
     name: '',
     categoryId: 0,
     unitId: 0,
-    quantity: 10,
-    unitPrice: 10000,
-    low_stock_threshold: 5,
-    is_sheet: false
+    is_sheet: false,
+    length: '',
+    width: '',
+    thickness: '',
+    barcode: '',
+    min_threshold: '5'
   });
 
   // Tab 3: BOM Editor active order state
@@ -59,13 +61,13 @@ export const InventoryBOM: React.FC = () => {
   
   // Calculate stats
   const totalStockItems = apiMaterials.length;
-  const lowStockItems = apiMaterials.filter(p => Number(p.quantity) <= Number(p.low_stock_threshold));
+  const lowStockItems = apiMaterials.filter(p => Number(p.total_stock) <= Number(p.min_threshold));
 
   // Filtered products list
   const filteredProducts = apiMaterials.filter(p => {
     const matchesCategory = stockCategory === 'ALL' || String(p.category) === stockCategory;
     const matchesSearch = p.name.toLowerCase().includes(stockSearchQuery.toLowerCase());
-    const matchesLowStock = !showLowStockOnly || Number(p.quantity) <= Number(p.low_stock_threshold);
+    const matchesLowStock = !showLowStockOnly || Number(p.total_stock) <= Number(p.min_threshold);
     return matchesCategory && matchesSearch && matchesLowStock;
   });
 
@@ -82,21 +84,25 @@ export const InventoryBOM: React.FC = () => {
       name: txForm.name,
       category: Number(txForm.categoryId),
       unit: Number(txForm.unitId),
-      quantity: String(txForm.quantity),
-      unit_price: String(txForm.unitPrice),
-      low_stock_threshold: String(txForm.low_stock_threshold),
-      is_sheet: txForm.is_sheet
-    });
+      is_sheet: txForm.is_sheet,
+      length: txForm.length || undefined,
+      width: txForm.width || undefined,
+      thickness: txForm.thickness || undefined,
+      barcode: txForm.barcode || undefined,
+      min_threshold: String(txForm.min_threshold)
+    } as any);
 
     setShowAddTxModal(false);
     setTxForm({
       name: '',
       categoryId: apiCategories[0]?.id || 0,
       unitId: apiUnits[0]?.id || 0,
-      quantity: 10,
-      unitPrice: 10000,
-      low_stock_threshold: 5,
-      is_sheet: false
+      is_sheet: false,
+      length: '',
+      width: '',
+      thickness: '',
+      barcode: '',
+      min_threshold: '5'
     });
   };
 
@@ -128,7 +134,7 @@ export const InventoryBOM: React.FC = () => {
   const orderBOMItems = apiBOMs.filter(item => item.order === orderIdNum);
   const totalBOMCost = orderBOMItems.reduce((acc, item) => {
     const p = apiMaterials.find(prod => prod.id === item.material);
-    const price = Number(p?.unit_price) || 0;
+    const price = Number(p?.average_price) || 0;
     return acc + (Number(item.required_qty) * price);
   }, 0);
 
@@ -258,7 +264,7 @@ export const InventoryBOM: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-brand-border/60">
                   {filteredProducts.map(product => {
-                    const isLow = Number(product.quantity) <= Number(product.low_stock_threshold);
+                    const isLow = Number(product.total_stock) <= Number(product.min_threshold);
                     return (
                       <tr 
                         key={product.id} 
@@ -269,10 +275,10 @@ export const InventoryBOM: React.FC = () => {
                           <span className="text-[10px] text-slate-500 font-bold block mt-0.5">{getCategoryLabel(product.category)}</span>
                         </td>
                         <td className="px-5 py-4.5 text-brand-emerald font-mono font-black">
-                          {product.quantity}
+                          {product.total_stock}
                         </td>
                         <td className="px-5 py-4.5 font-bold font-mono">
-                          {Number(product.unit_price).toLocaleString()} UZS
+                          {Number(product.average_price).toLocaleString()} UZS
                         </td>
                         <td className="px-5 py-4.5 text-center">
                           {isLow ? (
@@ -407,7 +413,7 @@ export const InventoryBOM: React.FC = () => {
                       >
                         <option value={0}>Material tanlang...</option>
                         {apiMaterials.map(p => (
-                          <option key={p.id} value={p.id}>{p.name} ({getCategoryLabel(p.category)}) - Ombor: {p.quantity}</option>
+                          <option key={p.id} value={p.id}>{p.name} ({getCategoryLabel(p.category)}) - Ombor: {p.total_stock}</option>
                         ))}
                       </select>
 
@@ -450,7 +456,7 @@ export const InventoryBOM: React.FC = () => {
                           ) : (
                             orderBOMItems.map(item => {
                               const p = apiMaterials.find(prod => prod.id === item.material);
-                              const price = Number(p?.unit_price) || 0;
+                              const price = Number(p?.average_price) || 0;
                               const rowTotal = Number(item.required_qty) * price;
                               
                               return (
@@ -548,29 +554,39 @@ export const InventoryBOM: React.FC = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-300 select-none cursor-pointer mt-2">
+                <input 
+                  type="checkbox"
+                  checked={txForm.is_sheet}
+                  onChange={e => setTxForm({...txForm, is_sheet: e.target.checked})}
+                  className="accent-brand-emerald w-4 h-4 bg-slate-900 border-slate-700"
+                />
+                Material List (Plita) ko'rinishidami?
+              </label>
+
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Miqdor</label>
-                  <input 
-                    type="number" 
-                    required
-                    min="0.1"
-                    step="0.1"
-                    value={txForm.quantity}
-                    onChange={e => setTxForm({...txForm, quantity: Number(e.target.value)})}
-                    className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
-                  />
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Uzunligi (m)</label>
+                  <input type="number" step="0.001" value={txForm.length} onChange={e => setTxForm({...txForm, length: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Birlik Narxi</label>
-                  <input 
-                    type="number" 
-                    required
-                    min="0"
-                    value={txForm.unitPrice}
-                    onChange={e => setTxForm({...txForm, unitPrice: Number(e.target.value)})}
-                    className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
-                  />
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Eni (m)</label>
+                  <input type="number" step="0.001" value={txForm.width} onChange={e => setTxForm({...txForm, width: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Qalinligi (mm)</label>
+                  <input type="number" step="0.01" value={txForm.thickness} onChange={e => setTxForm({...txForm, thickness: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Barkod</label>
+                  <input type="text" value={txForm.barcode} onChange={e => setTxForm({...txForm, barcode: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Minimal Qoldiq</label>
+                  <input type="number" step="0.01" required value={txForm.min_threshold} onChange={e => setTxForm({...txForm, min_threshold: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
                 </div>
               </div>
 

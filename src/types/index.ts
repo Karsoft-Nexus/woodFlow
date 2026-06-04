@@ -118,11 +118,18 @@ export interface Material {
   length?: string | null;
   width?: string | null;
   thickness?: string | null;
-  quantity: string;
-  low_stock_threshold: string;
-  unit_price: string;
+  barcode?: string | null;
+  min_threshold: string;
   category: number;
   unit: number;
+  
+  // Read-only fields
+  category_name?: string;
+  unit_code?: string;
+  area_m2?: string;
+  average_price?: string;
+  total_stock?: string;
+  available_stock?: string;
 }
 
 export interface Offcut {
