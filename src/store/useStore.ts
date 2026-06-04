@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction, WallDimensions } from '../types';
-import { productionApi, financeApi } from '../api';
+import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction, WallDimensions, Material, MaterialCategory, Offcut, BOM, Unit } from '../types';
+import { productionApi, financeApi, warehouseApi, bomApi } from '../api';
 
 interface AppState {
   orders: Order[];
@@ -10,6 +10,14 @@ interface AppState {
   products: Product[];
   bomItems: BOMItem[];
   stockTransactions: StockTransaction[];
+  
+  // Real API States (Agent 2)
+  apiMaterials: Material[];
+  apiCategories: MaterialCategory[];
+  apiUnits: Unit[];
+  apiOffcuts: Offcut[];
+  apiBOMs: BOM[];
+  
   isLoading: boolean;
   error: string | null;
   
@@ -36,6 +44,12 @@ interface AppState {
   addBOMItem: (orderId: string, productId: string, requiredQuantity: number) => void;
   removeBOMItem: (bomItemId: string) => void;
   addStockTransaction: (tx: Omit<StockTransaction, 'id' | 'createdAt'>) => void;
+  
+  // Real API Actions (Agent 2)
+  fetchInventoryAPI: () => Promise<void>;
+  createMaterialAPI: (data: Omit<Material, 'id'>) => Promise<void>;
+  fetchBOMsAPI: (orderId?: number) => Promise<void>;
+  createBOMAPI: (data: Omit<BOM, 'id'>) => Promise<void>;
 }
 
 // Initial Mock Data
@@ -229,6 +243,13 @@ export const useStore = create<AppState>((set, get) => ({
   products: initialProducts,
   bomItems: initialBOMItems,
   stockTransactions: initialStockTransactions,
+  
+  apiMaterials: [],
+  apiCategories: [],
+  apiUnits: [],
+  apiOffcuts: [],
+  apiBOMs: [],
+  
   isLoading: false,
   error: null,
 
@@ -735,5 +756,71 @@ export const useStore = create<AppState>((set, get) => ({
         stockTransactions: [newTx, ...state.stockTransactions]
       };
     });
+  },
+
+  // ==========================================
+  // REAL API ACTIONS FOR INVENTORY (Agent 2)
+  // ==========================================
+  fetchInventoryAPI: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const [materialsRes, categoriesRes, offcutsRes, unitsRes] = await Promise.all([
+        warehouseApi.getMaterials(),
+        warehouseApi.getCategories(),
+        warehouseApi.getOffcuts(),
+        warehouseApi.getUnits()
+      ]);
+      const extractArray = (res: any) => Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (Array.isArray(res?.results) ? res.results : []));
+      set({ 
+        apiMaterials: extractArray(materialsRes), 
+        apiCategories: extractArray(categoriesRes),
+        apiUnits: extractArray(unitsRes),
+        apiOffcuts: extractArray(offcutsRes),
+        isLoading: false 
+      });
+    } catch (err: any) {
+      console.error("Failed to fetch API Inventory:", err);
+      set({ isLoading: false, error: err.message || "Xatolik yuz berdi" });
+    }
+  },
+
+  createMaterialAPI: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      await warehouseApi.createMaterial(data);
+      // Re-fetch everything to update the list
+      await get().fetchInventoryAPI();
+    } catch (err: any) {
+      console.error("Failed to create material:", err);
+      set({ isLoading: false, error: err.message || "Material qo'shishda xatolik yuz berdi" });
+    }
+  },
+
+  fetchBOMsAPI: async (orderId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await bomApi.getBOMs(orderId);
+      const extractArray = (res: any) => Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (Array.isArray(res?.results) ? res.results : []));
+      set({ 
+        apiBOMs: extractArray(response),
+        isLoading: false 
+      });
+    } catch (err: any) {
+      console.error("Failed to fetch BOMs:", err);
+      set({ isLoading: false, error: err.message || "BOM yuklashda xatolik" });
+    }
+  },
+
+  createBOMAPI: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      await bomApi.createBOM(data);
+      if (data.order) {
+        await get().fetchBOMsAPI(data.order);
+      }
+    } catch (err: any) {
+      console.error("Failed to create BOM:", err);
+      set({ isLoading: false, error: err.message || "BOM saqlashda xatolik yuz berdi" });
+    }
   }
 }));

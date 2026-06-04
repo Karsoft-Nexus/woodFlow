@@ -1,0 +1,5495 @@
+openapi: 3.0.3
+info:
+  title: Alimplas API
+  version: 1.0.0
+  description: API Documentation
+  contact:
+    email: email@gmail.com
+  license:
+    name: BSD License
+paths:
+  /api/v1/admins/profile:
+    get:
+      operationId: admins_profile_retrieve
+      tags:
+      - 1. Admins (Administratorlar bo'limi)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminGetMe'
+          description: ''
+    put:
+      operationId: admins_profile_update
+      tags:
+      - 1. Admins (Administratorlar bo'limi)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminGetMe'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminGetMe'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminGetMe'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/AdminGetMe'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: admins_profile_partial_update
+      tags:
+      - 1. Admins (Administratorlar bo'limi)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminGetMe'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminGetMe'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminGetMe'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/AdminGetMe'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/admins/roles:
+    get:
+      operationId: admins_roles_list
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Roles
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoleList'
+          description: ''
+    post:
+      operationId: admins_roles_create
+      tags:
+      - Roles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Role'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Role'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Role'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/admins/roles/{id}:
+    get:
+      operationId: admins_roles_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Roles
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Role'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: admins_roles_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Roles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Role'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Role'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Role'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: admins_roles_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Roles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRole'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRole'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRole'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Role'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: admins_roles_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Roles
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/admins/user-salaries:
+    get:
+      operationId: admins_user_salaries_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: month
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: user
+        schema:
+          type: integer
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserSalaryList'
+          description: ''
+    post:
+      operationId: admins_user_salaries_create
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSalary'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSalary'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSalary'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/UserSalary'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/admins/user-salaries/{id}:
+    get:
+      operationId: admins_user_salaries_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/UserSalary'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: admins_user_salaries_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSalary'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSalary'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSalary'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/UserSalary'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: admins_user_salaries_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSalary'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSalary'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSalary'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/UserSalary'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: admins_user_salaries_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/admins/users:
+    get:
+      operationId: admins_users_list
+      parameters:
+      - in: query
+        name: created_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: created_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: first_name
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: last_name
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: phone
+        schema:
+          type: string
+      - in: query
+        name: role
+        schema:
+          type: array
+          items:
+            type: integer
+        explode: true
+        style: form
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminCreateList'
+          description: ''
+    post:
+      operationId: admins_users_create
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/AdminCreate'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/admins/users/{id}:
+    get:
+      operationId: admins_users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/AdminCreate'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: admins_users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/AdminCreate'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: admins_users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCreate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/AdminCreate'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: admins_users_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/analytics/dashboard-stats:
+    get:
+      operationId: analytics_dashboard_stats_retrieve
+      tags:
+      - Analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/salary-report:
+    get:
+      operationId: analytics_salary_report_retrieve
+      parameters:
+      - in: query
+        name: month
+        schema:
+          type: integer
+        description: Oy (1-12)
+      - in: query
+        name: year
+        schema:
+          type: integer
+        description: 'Yil (masalan: 2026)'
+      tags:
+      - Analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bom:
+    get:
+      operationId: bom_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Production - BOM
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBOMList'
+          description: ''
+    post:
+      operationId: bom_create
+      tags:
+      - Production - BOM
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BOM'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BOM'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BOM'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/BOM'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/bom/{id}:
+    get:
+      operationId: bom_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - BOM
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/BOM'
+                required:
+                - message
+                - data
+          description: ''
+    post:
+      operationId: bom_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - BOM
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BOM'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BOM'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BOM'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/BOM'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: bom_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - BOM
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BOM'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BOM'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BOM'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/BOM'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: bom_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - BOM
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBOM'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBOM'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBOM'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/BOM'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: bom_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - BOM
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/categories:
+    get:
+      operationId: categories_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Warehouse - Categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMaterialCategoryList'
+          description: ''
+    post:
+      operationId: categories_create
+      tags:
+      - Warehouse - Categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialCategory'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MaterialCategory'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/categories/{id}:
+    get:
+      operationId: categories_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MaterialCategory'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: categories_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialCategory'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MaterialCategory'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: categories_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialCategory'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MaterialCategory'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: categories_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Categories
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/change-password:
+    post:
+      operationId: change_password_create
+      tags:
+      - 5. Auth & Accounts (Tizimga kirish va Profillar)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/ChangePassword'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/customers:
+    get:
+      operationId: customers_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - CRM - Customers
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomerList'
+          description: ''
+    post:
+      operationId: customers_create
+      tags:
+      - CRM - Customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Customer'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/customers/{id}:
+    get:
+      operationId: customers_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Customers
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Customer'
+                required:
+                - message
+                - data
+          description: ''
+    post:
+      operationId: customers_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Customer'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: customers_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Customer'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: customers_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Customer'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: customers_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Customers
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/finance/transactions/:
+    get:
+      operationId: finance_transactions_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - CUSTOMER_PAYMENT
+          - MATERIAL_BUY
+          - OTHER
+          - RENT
+          - SALARY
+          - UTILITIES
+        description: |-
+          * `CUSTOMER_PAYMENT` - Mijoz to'lovi
+          * `MATERIAL_BUY` - Xomashyo xaridi
+          * `SALARY` - Ish haqi
+          * `RENT` - Arenda
+          * `UTILITIES` - Kommunal to'lovlar
+          * `OTHER` - Boshqa
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: order
+        schema:
+          type: integer
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: tx_type
+        schema:
+          type: string
+          enum:
+          - EXPENSE
+          - INCOME
+        description: |-
+          * `INCOME` - Kirim
+          * `EXPENSE` - Chiqim
+      tags:
+      - Finance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFinanceList'
+          description: ''
+    post:
+      operationId: finance_transactions_create
+      tags:
+      - Finance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Finance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Finance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Finance'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Finance'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/finance/transactions/{id}/:
+    get:
+      operationId: finance_transactions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Finance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Finance'
+                required:
+                - message
+                - data
+          description: ''
+    post:
+      operationId: finance_transactions_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Finance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Finance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Finance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Finance'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Finance'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: finance_transactions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Finance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Finance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Finance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Finance'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Finance'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: finance_transactions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Finance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFinance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFinance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFinance'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Finance'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: finance_transactions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Finance
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/login:
+    post:
+      operationId: login_create
+      description: |-
+        :param request: None
+        :return: "data": {
+                        "id": id,
+                        "phone": phone,
+                        "token": {"access":access_token,
+                            "refresh":refresh}
+                    }
+      tags:
+      - 5. Auth & Accounts (Tizimga kirish va Profillar)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Login'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/materials:
+    get:
+      operationId: materials_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: number
+      - in: query
+        name: is_sheet
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: low_stock
+        schema:
+          type: boolean
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Warehouse - Materials
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMaterialList'
+          description: ''
+    post:
+      operationId: materials_create
+      tags:
+      - Warehouse - Materials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Material'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Material'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Material'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Material'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/materials/{id}:
+    get:
+      operationId: materials_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Materials
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Material'
+                required:
+                - message
+                - data
+          description: ''
+    post:
+      operationId: materials_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Materials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Material'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Material'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Material'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Material'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: materials_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Materials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Material'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Material'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Material'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Material'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: materials_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Materials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterial'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterial'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterial'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Material'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: materials_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Materials
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/offcuts:
+    get:
+      operationId: offcuts_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: material
+        schema:
+          type: number
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - AVAILABLE
+          - SCRAP
+          - USED
+        description: |-
+          * `AVAILABLE` - Mavjud (Omborda)
+          * `USED` - Ishlatildi
+          * `SCRAP` - Brak (Yaroqsiz)
+      tags:
+      - Warehouse - Offcuts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOffcutList'
+          description: ''
+    post:
+      operationId: offcuts_create
+      tags:
+      - Warehouse - Offcuts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Offcut'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Offcut'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Offcut'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Offcut'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/offcuts/{id}:
+    get:
+      operationId: offcuts_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Offcuts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Offcut'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: offcuts_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Offcuts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Offcut'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Offcut'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Offcut'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Offcut'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: offcuts_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Offcuts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOffcut'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOffcut'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOffcut'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Offcut'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: offcuts_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Offcuts
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/orders:
+    get:
+      operationId: orders_list
+      parameters:
+      - in: query
+        name: customer
+        schema:
+          type: number
+      - in: query
+        name: is_contract_signed
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: product_type
+        schema:
+          type: string
+          enum:
+          - KITCHEN
+          - OFFICE
+          - OTHER
+          - SHKAF
+          - SPALNIY
+        description: |-
+          * `KITCHEN` - Kitchen
+          * `SHKAF` - Shkaf / Wardrobe
+          * `SPALNIY` - Bedroom
+          * `OFFICE` - Office Furniture
+          * `OTHER` - Other
+      - in: query
+        name: source
+        schema:
+          type: string
+          enum:
+          - INSTAGRAM
+          - OFFICE
+          - PHONE
+          - TELEGRAM
+        description: |-
+          * `TELEGRAM` - Telegram
+          * `INSTAGRAM` - Instagram
+          * `PHONE` - Phone
+          * `OFFICE` - Office
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - CONTRACT_PENDING
+          - CONTRACT_SIGNED
+          - DESIGNING
+          - DESIGN_APPROVED
+          - INSTALLED
+          - LEAD_NEW
+          - MEASURE_ASSIGNED
+          - MEASURE_DONE
+          - PRODUCTION
+          - READY
+        description: |-
+          * `LEAD_NEW` - Yangi Lid
+          * `MEASURE_ASSIGNED` - Zamer tayinlangan
+          * `MEASURE_DONE` - Zamer qilingan
+          * `DESIGNING` - 3D Loyihalashda
+          * `DESIGN_APPROVED` - Dizayn tasdiqlangan
+          * `CONTRACT_PENDING` - Shartnoma kutilmoqda
+          * `CONTRACT_SIGNED` - Shartnoma imzolangan
+          * `PRODUCTION` - Ishlab chiqarishda
+          * `READY` - Tayyor (OTK)
+          * `INSTALLED` - O'rnatildi
+      tags:
+      - CRM - Orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+    post:
+      operationId: orders_create
+      tags:
+      - CRM - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Order'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/orders/{id}:
+    get:
+      operationId: orders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Order'
+                required:
+                - message
+                - data
+          description: ''
+    post:
+      operationId: orders_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Order'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: orders_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Order'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: orders_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/Order'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: orders_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Orders
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/orders/{id}/approve-design:
+    post:
+      operationId: orders_approve_design_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Order Workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/orders/{id}/assign-zamer:
+    post:
+      operationId: orders_assign_zamer_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Order Workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/orders/{id}/sign-contract:
+    post:
+      operationId: orders_sign_contract_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Order Workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/orders/{id}/upload-design:
+    post:
+      operationId: orders_upload_design_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Order Workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/orders/{id}/upload-zamer:
+    post:
+      operationId: orders_upload_zamer_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - CRM - Order Workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/production-stages:
+    get:
+      operationId: production_stages_list
+      parameters:
+      - in: query
+        name: assigned_worker
+        schema:
+          type: number
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: order
+        schema:
+          type: number
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: stage_type
+        schema:
+          type: string
+          enum:
+          - KROMKA
+          - PRISTADKA
+          - RASKROY
+          - SBORKA
+          - USTANOVKA
+        description: |-
+          * `RASKROY` - Raskroy (Kesish)
+          * `KROMKA` - Kromka (Chekka)
+          * `PRISTADKA` - Pristadka (Teshish)
+          * `SBORKA` - Sborka (Yig'ish)
+          * `USTANOVKA` - Ustanovka (O'rnatish)
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - DONE
+          - IN_PROGRESS
+          - PENDING
+        description: |-
+          * `PENDING` - Kutilmoqda
+          * `IN_PROGRESS` - Jarayonda
+          * `DONE` - Tugallandi
+      tags:
+      - Production - Stages
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductionStageList'
+          description: ''
+    post:
+      operationId: production_stages_create
+      tags:
+      - Production - Stages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/ProductionStage'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/production-stages/{id}:
+    get:
+      operationId: production_stages_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Stages
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/ProductionStage'
+                required:
+                - message
+                - data
+          description: ''
+    post:
+      operationId: production_stages_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Stages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/ProductionStage'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: production_stages_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Stages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductionStage'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/ProductionStage'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: production_stages_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Stages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductionStage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductionStage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductionStage'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/ProductionStage'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: production_stages_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Stages
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/production/board/:
+    get:
+      operationId: production_board_retrieve
+      tags:
+      - Production - Frontend Board
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/production/stages/{id}/finish/:
+    post:
+      operationId: production_stages_finish_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Stages
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/production/stages/{id}/start/:
+    post:
+      operationId: production_stages_start_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Stages
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/profile:
+    get:
+      operationId: profile_retrieve
+      tags:
+      - 5. Auth & Accounts (Tizimga kirish va Profillar)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGetMe'
+          description: ''
+    put:
+      operationId: profile_update
+      tags:
+      - 5. Auth & Accounts (Tizimga kirish va Profillar)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGetMe'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGetMe'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGetMe'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/UserGetMe'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: profile_partial_update
+      tags:
+      - 5. Auth & Accounts (Tizimga kirish va Profillar)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGetMe'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGetMe'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGetMe'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/UserGetMe'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/reservations:
+    get:
+      operationId: reservations_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Warehouse - Reservations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMaterialReservationList'
+          description: ''
+    post:
+      operationId: reservations_create
+      tags:
+      - Warehouse - Reservations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialReservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialReservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialReservation'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MaterialReservation'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/reservations/{id}:
+    get:
+      operationId: reservations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Reservations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MaterialReservation'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: reservations_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Reservations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialReservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialReservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialReservation'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MaterialReservation'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: reservations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Reservations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialReservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialReservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialReservation'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MaterialReservation'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: reservations_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Reservations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/reservations/consume-reservation:
+    post:
+      operationId: reservations_consume_reservation_create
+      tags:
+      - Warehouse - Reservations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/reservations/create-reservation:
+    post:
+      operationId: reservations_create_reservation_create
+      tags:
+      - Warehouse - Reservations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/schema/:
+    get:
+      operationId: schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - ckb
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - ms
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - ug
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - 5. Auth & Accounts (Tizimga kirish va Profillar)
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/transactions:
+    get:
+      operationId: transactions_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: material
+        schema:
+          type: number
+      - in: query
+        name: order_id
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: tx_type
+        schema:
+          type: string
+          title: Transaction Type
+          enum:
+          - IN
+          - OUT
+        description: |-
+          * `IN` - Kirim (In)
+          * `OUT` - Chiqim (Out)
+      tags:
+      - Warehouse - Transactions
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWarehouseTransactionList'
+          description: ''
+    post:
+      operationId: transactions_create
+      tags:
+      - Warehouse - Transactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarehouseTransaction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WarehouseTransaction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WarehouseTransaction'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/WarehouseTransaction'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/transactions/{id}:
+    get:
+      operationId: transactions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Transactions
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/WarehouseTransaction'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: transactions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Transactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarehouseTransaction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WarehouseTransaction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WarehouseTransaction'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/WarehouseTransaction'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: transactions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Transactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWarehouseTransaction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWarehouseTransaction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWarehouseTransaction'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/WarehouseTransaction'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: transactions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Transactions
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/units:
+    get:
+      operationId: units_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Warehouse - Units
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMeasurementUnitList'
+          description: ''
+    post:
+      operationId: units_create
+      tags:
+      - Warehouse - Units
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeasurementUnit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MeasurementUnit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MeasurementUnit'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MeasurementUnit'
+                required:
+                - message
+                - data
+          description: ''
+  /api/v1/units/{id}:
+    get:
+      operationId: units_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Units
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MeasurementUnit'
+                required:
+                - message
+                - data
+          description: ''
+    put:
+      operationId: units_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Units
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeasurementUnit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MeasurementUnit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MeasurementUnit'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MeasurementUnit'
+                required:
+                - message
+                - data
+          description: ''
+    patch:
+      operationId: units_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Units
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMeasurementUnit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMeasurementUnit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMeasurementUnit'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully
+                  data:
+                    $ref: '#/components/schemas/MeasurementUnit'
+                required:
+                - message
+                - data
+          description: ''
+    delete:
+      operationId: units_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Warehouse - Units
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/workers/{id}/payouts/:
+    get:
+      operationId: workers_payouts_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Frontend Payouts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/workers/{id}/set-daily-status/:
+    post:
+      operationId: workers_set_daily_status_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Production - Workers
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    AdminCreate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        role:
+          allOf:
+          - $ref: '#/components/schemas/Role'
+          readOnly: true
+        role_id:
+          type: integer
+          writeOnly: true
+        phone:
+          type: string
+          maxLength: 15
+        password:
+          type: string
+          writeOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+          title: Oxirgi kirish
+      required:
+      - created_at
+      - first_name
+      - id
+      - last_name
+      - password
+      - phone
+      - role
+      - role_id
+      - updated_at
+    AdminGetMe:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        full_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/Role'
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Oxirgi kirish
+        is_staff:
+          type: boolean
+          readOnly: true
+        is_superuser:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - first_name
+      - full_name
+      - id
+      - is_staff
+      - is_superuser
+      - last_login
+      - last_name
+      - phone
+      - role
+    BOM:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        material_name:
+          type: string
+          readOnly: true
+        required_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Required Quantity
+        actual_allocated_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+        order:
+          type: integer
+        material:
+          type: integer
+      required:
+      - id
+      - material
+      - material_name
+      - order
+      - required_qty
+    CategoryEnum:
+      enum:
+      - CUSTOMER_PAYMENT
+      - MATERIAL_BUY
+      - SALARY
+      - RENT
+      - UTILITIES
+      - OTHER
+      type: string
+      description: |-
+        * `CUSTOMER_PAYMENT` - Mijoz to'lovi
+        * `MATERIAL_BUY` - Xomashyo xaridi
+        * `SALARY` - Ish haqi
+        * `RENT` - Arenda
+        * `UTILITIES` - Kommunal to'lovlar
+        * `OTHER` - Boshqa
+    ChangePassword:
+      type: object
+      properties:
+        old_password:
+          type: string
+        new_password:
+          type: string
+      required:
+      - new_password
+      - old_password
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 100
+        phone:
+          type: string
+          title: Phone Number
+          maxLength: 20
+        address:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - first_name
+      - id
+      - phone
+    Finance:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        tx_type:
+          $ref: '#/components/schemas/FinanceTxTypeEnum'
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        order:
+          type: integer
+          nullable: true
+      required:
+      - amount
+      - category
+      - created_at
+      - id
+      - tx_type
+    FinanceTxTypeEnum:
+      enum:
+      - INCOME
+      - EXPENSE
+      type: string
+      description: |-
+        * `INCOME` - Kirim
+        * `EXPENSE` - Chiqim
+    Login:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        phone:
+          type: string
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - id
+      - password
+      - phone
+    Material:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        unit:
+          type: integer
+        unit_code:
+          type: string
+          readOnly: true
+        is_sheet:
+          type: boolean
+          title: Is Sheet/Board
+        length:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          nullable: true
+          title: Length (m)
+        width:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          nullable: true
+          title: Width (m)
+        thickness:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          title: Thickness (mm)
+        area_m2:
+          type: string
+          readOnly: true
+        barcode:
+          type: string
+          nullable: true
+          maxLength: 100
+        min_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+          title: Minimum Threshold
+        average_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+          readOnly: true
+        total_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,4})?$
+          readOnly: true
+        available_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,4})?$
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - area_m2
+      - available_stock
+      - average_price
+      - category
+      - category_name
+      - created_at
+      - id
+      - name
+      - total_stock
+      - unit
+      - unit_code
+      - updated_at
+    MaterialCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+        parent:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - name
+    MaterialReservation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order_reference_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          title: Order ID Reference
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,4})?$
+          title: Reserved Quantity
+        status:
+          $ref: '#/components/schemas/MaterialReservationStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        material:
+          type: integer
+      required:
+      - created_at
+      - id
+      - material
+      - order_reference_id
+      - quantity
+      - updated_at
+    MaterialReservationStatusEnum:
+      enum:
+      - ACTIVE
+      - CONSUMED
+      - CANCELLED
+      type: string
+      description: |-
+        * `ACTIVE` - Faol (Rezervda)
+        * `CONSUMED` - Ishlatildi (Chiqim qilindi)
+        * `CANCELLED` - Bekor qilindi
+    MeasurementUnit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          maxLength: 20
+      required:
+      - code
+      - id
+      - name
+    Offcut:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        material_name:
+          type: string
+          readOnly: true
+        length:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Length (m)
+        width:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Width (m)
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        status:
+          $ref: '#/components/schemas/OffcutStatusEnum'
+        original_order_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        material:
+          type: integer
+      required:
+      - created_at
+      - id
+      - length
+      - material
+      - material_name
+      - updated_at
+      - width
+    OffcutStatusEnum:
+      enum:
+      - AVAILABLE
+      - USED
+      - SCRAP
+      type: string
+      description: |-
+        * `AVAILABLE` - Mavjud (Omborda)
+        * `USED` - Ishlatildi
+        * `SCRAP` - Brak (Yaroqsiz)
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer_detail:
+          allOf:
+          - $ref: '#/components/schemas/Customer'
+          readOnly: true
+        boms:
+          type: array
+          items:
+            $ref: '#/components/schemas/BOM'
+          readOnly: true
+        production_stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionStage'
+          readOnly: true
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        product_type:
+          $ref: '#/components/schemas/ProductTypeEnum'
+        status:
+          $ref: '#/components/schemas/OrderStatusEnum'
+        zamer_dimensions:
+          type: string
+          nullable: true
+          title: Zamer Dimensions (JSON/Text)
+        zamer_photos_url:
+          nullable: true
+          title: Zamer Photos URLs
+        design_3d_url:
+          type: string
+          format: uri
+          nullable: true
+          title: 3D Design URL
+          maxLength: 200
+        contract_number:
+          type: string
+          nullable: true
+          maxLength: 50
+        contract_generated_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_contract_signed:
+          type: boolean
+        signed_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        advance_payment:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        customer:
+          type: integer
+        zamerchik:
+          type: integer
+          nullable: true
+        designer:
+          type: integer
+          nullable: true
+      required:
+      - boms
+      - created_at
+      - customer
+      - customer_detail
+      - id
+      - product_type
+      - production_stages
+      - updated_at
+    OrderStatusEnum:
+      enum:
+      - LEAD_NEW
+      - MEASURE_ASSIGNED
+      - MEASURE_DONE
+      - DESIGNING
+      - DESIGN_APPROVED
+      - CONTRACT_PENDING
+      - CONTRACT_SIGNED
+      - PRODUCTION
+      - READY
+      - INSTALLED
+      type: string
+      description: |-
+        * `LEAD_NEW` - Yangi Lid
+        * `MEASURE_ASSIGNED` - Zamer tayinlangan
+        * `MEASURE_DONE` - Zamer qilingan
+        * `DESIGNING` - 3D Loyihalashda
+        * `DESIGN_APPROVED` - Dizayn tasdiqlangan
+        * `CONTRACT_PENDING` - Shartnoma kutilmoqda
+        * `CONTRACT_SIGNED` - Shartnoma imzolangan
+        * `PRODUCTION` - Ishlab chiqarishda
+        * `READY` - Tayyor (OTK)
+        * `INSTALLED` - O'rnatildi
+    PaginatedAdminCreateList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCreate'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedBOMList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BOM'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedCustomerList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedFinanceList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finance'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedMaterialCategoryList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialCategory'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedMaterialList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Material'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedMaterialReservationList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialReservation'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedMeasurementUnitList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeasurementUnit'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedOffcutList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Offcut'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedOrderList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedProductionStageList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionStage'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedRoleList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedUserSalaryList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSalary'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PaginatedWarehouseTransactionList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarehouseTransaction'
+        pagination:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 123
+            next:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=4
+            previous:
+              type: string
+              nullable: true
+              format: uri
+              example: http://api.example.org/accounts/?page=2
+          required:
+          - count
+      required:
+      - data
+      - pagination
+    PatchedAdminCreate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        role:
+          allOf:
+          - $ref: '#/components/schemas/Role'
+          readOnly: true
+        role_id:
+          type: integer
+          writeOnly: true
+        phone:
+          type: string
+          maxLength: 15
+        password:
+          type: string
+          writeOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+          title: Oxirgi kirish
+    PatchedAdminGetMe:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        full_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/Role'
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Oxirgi kirish
+        is_staff:
+          type: boolean
+          readOnly: true
+        is_superuser:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedBOM:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        material_name:
+          type: string
+          readOnly: true
+        required_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Required Quantity
+        actual_allocated_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+        order:
+          type: integer
+        material:
+          type: integer
+    PatchedCustomer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 100
+        phone:
+          type: string
+          title: Phone Number
+          maxLength: 20
+        address:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedFinance:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        tx_type:
+          $ref: '#/components/schemas/FinanceTxTypeEnum'
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        order:
+          type: integer
+          nullable: true
+    PatchedMaterial:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        unit:
+          type: integer
+        unit_code:
+          type: string
+          readOnly: true
+        is_sheet:
+          type: boolean
+          title: Is Sheet/Board
+        length:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          nullable: true
+          title: Length (m)
+        width:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          nullable: true
+          title: Width (m)
+        thickness:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          title: Thickness (mm)
+        area_m2:
+          type: string
+          readOnly: true
+        barcode:
+          type: string
+          nullable: true
+          maxLength: 100
+        min_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+          title: Minimum Threshold
+        average_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+          readOnly: true
+        total_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,4})?$
+          readOnly: true
+        available_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,4})?$
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedMaterialCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+        parent:
+          type: integer
+          nullable: true
+    PatchedMaterialReservation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order_reference_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          title: Order ID Reference
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,4})?$
+          title: Reserved Quantity
+        status:
+          $ref: '#/components/schemas/MaterialReservationStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        material:
+          type: integer
+    PatchedMeasurementUnit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          maxLength: 20
+    PatchedOffcut:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        material_name:
+          type: string
+          readOnly: true
+        length:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Length (m)
+        width:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Width (m)
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        status:
+          $ref: '#/components/schemas/OffcutStatusEnum'
+        original_order_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        material:
+          type: integer
+    PatchedOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer_detail:
+          allOf:
+          - $ref: '#/components/schemas/Customer'
+          readOnly: true
+        boms:
+          type: array
+          items:
+            $ref: '#/components/schemas/BOM'
+          readOnly: true
+        production_stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionStage'
+          readOnly: true
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        product_type:
+          $ref: '#/components/schemas/ProductTypeEnum'
+        status:
+          $ref: '#/components/schemas/OrderStatusEnum'
+        zamer_dimensions:
+          type: string
+          nullable: true
+          title: Zamer Dimensions (JSON/Text)
+        zamer_photos_url:
+          nullable: true
+          title: Zamer Photos URLs
+        design_3d_url:
+          type: string
+          format: uri
+          nullable: true
+          title: 3D Design URL
+          maxLength: 200
+        contract_number:
+          type: string
+          nullable: true
+          maxLength: 50
+        contract_generated_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_contract_signed:
+          type: boolean
+        signed_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        advance_payment:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        customer:
+          type: integer
+        zamerchik:
+          type: integer
+          nullable: true
+        designer:
+          type: integer
+          nullable: true
+    PatchedProductionStage:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        assigned_worker_name:
+          type: string
+          readOnly: true
+        stage_type:
+          $ref: '#/components/schemas/StageTypeEnum'
+        status:
+          $ref: '#/components/schemas/ProductionStageStatusEnum'
+        planned_start_at:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end_at:
+          type: string
+          format: date-time
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        payout_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        order:
+          type: integer
+        assigned_worker:
+          type: integer
+          nullable: true
+    PatchedRole:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 50
+    PatchedUserGetMe:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        full_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/Role'
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedUserSalary:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        user_id:
+          type: integer
+          writeOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        month:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedWarehouseTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        material_name:
+          type: string
+          readOnly: true
+        tx_type:
+          allOf:
+          - $ref: '#/components/schemas/WarehouseTransactionTxTypeEnum'
+          title: Transaction Type
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,4})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Price (Per Unit)
+        order_reference_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          title: Order ID Reference
+        comment:
+          type: string
+          nullable: true
+          title: Comment/Note
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        material:
+          type: integer
+    ProductTypeEnum:
+      enum:
+      - KITCHEN
+      - SHKAF
+      - SPALNIY
+      - OFFICE
+      - OTHER
+      type: string
+      description: |-
+        * `KITCHEN` - Kitchen
+        * `SHKAF` - Shkaf / Wardrobe
+        * `SPALNIY` - Bedroom
+        * `OFFICE` - Office Furniture
+        * `OTHER` - Other
+    ProductionStage:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        assigned_worker_name:
+          type: string
+          readOnly: true
+        stage_type:
+          $ref: '#/components/schemas/StageTypeEnum'
+        status:
+          $ref: '#/components/schemas/ProductionStageStatusEnum'
+        planned_start_at:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end_at:
+          type: string
+          format: date-time
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        payout_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        order:
+          type: integer
+        assigned_worker:
+          type: integer
+          nullable: true
+      required:
+      - assigned_worker_name
+      - id
+      - order
+      - stage_type
+    ProductionStageStatusEnum:
+      enum:
+      - PENDING
+      - IN_PROGRESS
+      - DONE
+      type: string
+      description: |-
+        * `PENDING` - Kutilmoqda
+        * `IN_PROGRESS` - Jarayonda
+        * `DONE` - Tugallandi
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 50
+      required:
+      - code
+      - id
+      - name
+    SourceEnum:
+      enum:
+      - TELEGRAM
+      - INSTAGRAM
+      - PHONE
+      - OFFICE
+      type: string
+      description: |-
+        * `TELEGRAM` - Telegram
+        * `INSTAGRAM` - Instagram
+        * `PHONE` - Phone
+        * `OFFICE` - Office
+    StageTypeEnum:
+      enum:
+      - RASKROY
+      - KROMKA
+      - PRISTADKA
+      - SBORKA
+      - USTANOVKA
+      type: string
+      description: |-
+        * `RASKROY` - Raskroy (Kesish)
+        * `KROMKA` - Kromka (Chekka)
+        * `PRISTADKA` - Pristadka (Teshish)
+        * `SBORKA` - Sborka (Yig'ish)
+        * `USTANOVKA` - Ustanovka (O'rnatish)
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/Role'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        phone:
+          type: string
+          maxLength: 15
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+      required:
+      - created_at
+      - first_name
+      - id
+      - last_name
+      - phone
+      - role
+    UserGetMe:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        full_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/Role'
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - first_name
+      - full_name
+      - id
+      - last_name
+      - phone
+      - role
+    UserSalary:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        user_id:
+          type: integer
+          writeOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        month:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - created_at
+      - id
+      - user
+      - user_id
+    WarehouseTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        material_name:
+          type: string
+          readOnly: true
+        tx_type:
+          allOf:
+          - $ref: '#/components/schemas/WarehouseTransactionTxTypeEnum'
+          title: Transaction Type
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,4})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Price (Per Unit)
+        order_reference_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          title: Order ID Reference
+        comment:
+          type: string
+          nullable: true
+          title: Comment/Note
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        material:
+          type: integer
+      required:
+      - created_at
+      - id
+      - material
+      - material_name
+      - price
+      - quantity
+      - tx_type
+    WarehouseTransactionTxTypeEnum:
+      enum:
+      - IN
+      - OUT
+      type: string
+      description: |-
+        * `IN` - Kirim (In)
+        * `OUT` - Chiqim (Out)
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

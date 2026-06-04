@@ -1,30 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { 
   Package, 
   Plus, 
-  TrendingUp, 
-  TrendingDown, 
   AlertTriangle, 
   Trash2, 
   ClipboardList, 
-  DollarSign, 
   Search,
-  ShoppingCart
 } from 'lucide-react';
-import type { ProductCategory } from '../../types';
-
 
 export const InventoryBOM: React.FC = () => {
   const { 
-    products, 
-    bomItems, 
-    orders, 
-    stockTransactions, 
-    addStockTransaction, 
-    addBOMItem, 
-    removeBOMItem 
+    apiMaterials, 
+    apiCategories,
+    apiUnits,
+    apiOffcuts,
+    apiBOMs,
+    orders,
+    fetchInventoryAPI,
+    createMaterialAPI,
+    fetchBOMsAPI,
+    createBOMAPI,
+    isLoading
   } = useStore();
+
+  useEffect(() => {
+    fetchInventoryAPI();
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'STOCK' | 'TRANSACTIONS' | 'BOM'>('STOCK');
   
@@ -36,17 +38,21 @@ export const InventoryBOM: React.FC = () => {
   // Add stock transaction modal state
   const [showAddTxModal, setShowAddTxModal] = useState(false);
   const [txForm, setTxForm] = useState({
-    productId: products[0]?.id || '',
-    transactionType: 'KIRIM' as 'KIRIM' | 'CHIQIM',
-    quantity: 10,
-    unitPrice: products[0]?.averagePrice || 10000,
-    notes: ''
+    name: '',
+    categoryId: 0,
+    unitId: 0,
+    is_sheet: false,
+    length: '',
+    width: '',
+    thickness: '',
+    barcode: '',
+    min_threshold: '5'
   });
 
   // Tab 3: BOM Editor active order state
   const [selectedBOMOrderId, setSelectedBOMOrderId] = useState<string>(orders[0]?.id || '');
   const [newBOMItemForm, setNewBOMItemForm] = useState({
-    productId: products[0]?.id || '',
+    productId: 0,
     requiredQuantity: 1
   });
 
@@ -54,71 +60,82 @@ export const InventoryBOM: React.FC = () => {
   const currentBOMOrder = orders.find(o => o.id === selectedBOMOrderId);
   
   // Calculate stats
-  const totalStockItems = products.reduce((acc, p) => acc + p.quantityInStock, 0);
-  const lowStockItems = products.filter(p => p.quantityInStock <= p.minThreshold);
-  const totalReservedItems = products.reduce((acc, p) => acc + p.reservedQuantity, 0);
+  const totalStockItems = apiMaterials.length;
+  const lowStockItems = apiMaterials.filter(p => Number(p.total_stock) <= Number(p.min_threshold));
 
   // Filtered products list
-  const filteredProducts = products.filter(p => {
-    const matchesCategory = stockCategory === 'ALL' || p.category === stockCategory;
+  const filteredProducts = apiMaterials.filter(p => {
+    const matchesCategory = stockCategory === 'ALL' || String(p.category) === stockCategory;
     const matchesSearch = p.name.toLowerCase().includes(stockSearchQuery.toLowerCase());
-    const matchesLowStock = !showLowStockOnly || p.quantityInStock <= p.minThreshold;
+    const matchesLowStock = !showLowStockOnly || Number(p.total_stock) <= Number(p.min_threshold);
     return matchesCategory && matchesSearch && matchesLowStock;
   });
 
-  const handleStockTxSubmit = (e: React.FormEvent) => {
+  const handleStockTxSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!txForm.productId) return;
+    if (!txForm.name) return;
+    
+    if (!txForm.categoryId || !txForm.unitId) {
+      alert("Kategoriya va Birlikni tanlash shart!");
+      return;
+    }
 
-    addStockTransaction({
-      productId: txForm.productId,
-      transactionType: txForm.transactionType,
-      quantity: Number(txForm.quantity),
-      unitPrice: Number(txForm.unitPrice),
-      notes: txForm.notes
-    });
+    await createMaterialAPI({
+      name: txForm.name,
+      category: Number(txForm.categoryId),
+      unit: Number(txForm.unitId),
+      is_sheet: txForm.is_sheet,
+      length: txForm.length || undefined,
+      width: txForm.width || undefined,
+      thickness: txForm.thickness || undefined,
+      barcode: txForm.barcode || undefined,
+      min_threshold: String(txForm.min_threshold)
+    } as any);
 
     setShowAddTxModal(false);
     setTxForm({
-      productId: products[0]?.id || '',
-      transactionType: 'KIRIM',
-      quantity: 10,
-      unitPrice: products[0]?.averagePrice || 10000,
-      notes: ''
+      name: '',
+      categoryId: apiCategories[0]?.id || 0,
+      unitId: apiUnits[0]?.id || 0,
+      is_sheet: false,
+      length: '',
+      width: '',
+      thickness: '',
+      barcode: '',
+      min_threshold: '5'
     });
   };
 
-  const handleAddBOMItemSubmit = (e: React.FormEvent) => {
+  const handleAddBOMItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBOMOrderId || !newBOMItemForm.productId) return;
 
-    addBOMItem(selectedBOMOrderId, newBOMItemForm.productId, Number(newBOMItemForm.requiredQuantity));
+    const orderIdNum = parseInt(selectedBOMOrderId.replace(/\D/g, '')) || 1;
+    await createBOMAPI({
+      order: orderIdNum,
+      material: Number(newBOMItemForm.productId),
+      required_qty: String(newBOMItemForm.requiredQuantity),
+      allocated_qty: '0',
+      unit_price: '0'
+    });
     setNewBOMItemForm({
       ...newBOMItemForm,
       requiredQuantity: 1
     });
   };
 
-  // Get Category Uzbek label
-  const getCategoryLabel = (category: ProductCategory) => {
-    switch (category) {
-      case 'PLATES': return 'Plita materiallar (DSP/MDF)';
-      case 'STOLISHNITSA': return 'Stolishnitsalar';
-      case 'EDGES': return 'Mebel lentasi (Kromka)';
-      case 'FURNITURES': return 'Furnituralar (Petlya, Shrup)';
-      case 'ACCESSORIES': return 'Aksessuarlar (Rushka, Porshun)';
-      case 'WEIGHT_ITEMS': return 'Og\'irlik xomashyolar (Yelim, kg)';
-      case 'GLASS': return 'Oyna va Shishalar';
-      default: return category;
-    }
+  // Get Category label
+  const getCategoryLabel = (catId: number) => {
+    return apiCategories.find(c => c.id === catId)?.name || 'Noma`lum';
   };
 
   // Get order's BOM details
-  const orderBOMItems = bomItems.filter(item => item.orderId === selectedBOMOrderId);
+  const orderIdNum = parseInt(selectedBOMOrderId.replace(/\D/g, '')) || 1;
+  const orderBOMItems = apiBOMs.filter(item => item.order === orderIdNum);
   const totalBOMCost = orderBOMItems.reduce((acc, item) => {
-    const p = products.find(prod => prod.id === item.productId);
-    const price = p?.averagePrice || 0;
-    return acc + (item.requiredQuantity * price);
+    const p = apiMaterials.find(prod => prod.id === item.material);
+    const price = Number(p?.average_price) || 0;
+    return acc + (Number(item.required_qty) * price);
   }, 0);
 
   return (
@@ -148,7 +165,7 @@ export const InventoryBOM: React.FC = () => {
               activeTab === 'TRANSACTIONS' ? 'bg-brand-emerald text-brand-dark' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Kirim-Chiqim Tarixi
+            Offcuts (Qoldiq/Brak)
           </button>
           <button 
             onClick={() => setActiveTab('BOM')}
@@ -176,16 +193,6 @@ export const InventoryBOM: React.FC = () => {
                 <div>
                   <span className="text-[10px] text-slate-500 font-extrabold uppercase">Ombordagi Jami Materiallar</span>
                   <h3 className="text-xl font-black text-slate-100">{totalStockItems} ta</h3>
-                </div>
-              </div>
-
-              <div className="bg-brand-surface border border-brand-border p-4.5 rounded-2xl flex items-center gap-4">
-                <div className="p-3 bg-yellow-500/10 text-yellow-500 rounded-xl">
-                  <ShoppingCart className="w-6 h-6" />
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-extrabold uppercase">Zaxiraga (Bron) Olingan</span>
-                  <h3 className="text-xl font-black text-slate-100">{totalReservedItems} ta</h3>
                 </div>
               </div>
 
@@ -220,13 +227,9 @@ export const InventoryBOM: React.FC = () => {
                   className="bg-brand-dark border border-brand-border rounded-xl px-3 py-2 text-xs font-semibold text-slate-300 focus:outline-none"
                 >
                   <option value="ALL">Barcha Toifalar</option>
-                  <option value="PLATES">Plitalar (DSP/MDF)</option>
-                  <option value="STOLISHNITSA">Stolishnitsalar</option>
-                  <option value="EDGES">Kromka</option>
-                  <option value="FURNITURES">Furnituralar (Petlya, Shrup)</option>
-                  <option value="ACCESSORIES">Aksessuarlar (Rushka, Porshun)</option>
-                  <option value="WEIGHT_ITEMS">Og'irlik xomashyolar (Yelim, kg)</option>
-                  <option value="GLASS">Oyna va Shishalar</option>
+                  {apiCategories.map(cat => (
+                    <option key={cat.id} value={String(cat.id)}>{cat.name}</option>
+                  ))}
                 </select>
 
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-400 select-none cursor-pointer">
@@ -244,7 +247,7 @@ export const InventoryBOM: React.FC = () => {
                 onClick={() => setShowAddTxModal(true)}
                 className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5"
               >
-                <Plus className="w-4 h-4" /> Kirim / Chiqim Qilish
+                <Plus className="w-4 h-4" /> Yangi Xomashyo
               </button>
             </div>
 
@@ -254,8 +257,6 @@ export const InventoryBOM: React.FC = () => {
                 <thead>
                   <tr className="bg-slate-900/50 border-b border-brand-border text-[11px] font-black text-slate-500 uppercase tracking-wider">
                     <th className="px-5 py-4">Nomi & Toifasi</th>
-                    <th className="px-5 py-4">Joriy Qoldiq</th>
-                    <th className="px-5 py-4">Rezerv (Bron)</th>
                     <th className="px-5 py-4">Mavjud (Available)</th>
                     <th className="px-5 py-4">O'rtacha Tannarxi</th>
                     <th className="px-5 py-4 text-center">Status</th>
@@ -263,7 +264,7 @@ export const InventoryBOM: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-brand-border/60">
                   {filteredProducts.map(product => {
-                    const isLow = product.quantityInStock <= product.minThreshold;
+                    const isLow = Number(product.total_stock) <= Number(product.min_threshold);
                     return (
                       <tr 
                         key={product.id} 
@@ -273,17 +274,11 @@ export const InventoryBOM: React.FC = () => {
                           <div className="font-extrabold text-sm text-slate-200">{product.name}</div>
                           <span className="text-[10px] text-slate-500 font-bold block mt-0.5">{getCategoryLabel(product.category)}</span>
                         </td>
-                        <td className="px-5 py-4.5 font-mono">
-                          {product.quantityInStock} {product.unitOfMeasure}
-                        </td>
-                        <td className="px-5 py-4.5 text-yellow-500 font-mono">
-                          {product.reservedQuantity} {product.unitOfMeasure}
-                        </td>
                         <td className="px-5 py-4.5 text-brand-emerald font-mono font-black">
-                          {product.availableQuantity} {product.unitOfMeasure}
+                          {product.total_stock}
                         </td>
                         <td className="px-5 py-4.5 font-bold font-mono">
-                          {product.averagePrice.toLocaleString()} UZS
+                          {Number(product.average_price).toLocaleString()} UZS
                         </td>
                         <td className="px-5 py-4.5 text-center">
                           {isLow ? (
@@ -305,62 +300,49 @@ export const InventoryBOM: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 2: Kirim-Chiqim Tarixi */}
+        {/* Tab 2: Offcuts */}
         {activeTab === 'TRANSACTIONS' && (
           <div className="h-full flex flex-col p-6 space-y-6 overflow-y-auto">
             <div className="bg-brand-surface border border-brand-border p-4 rounded-2xl flex justify-between items-center">
-              <h3 className="text-sm font-black text-slate-200">Barcha Ombor Amallari Logi</h3>
-              <button 
-                onClick={() => setShowAddTxModal(true)}
-                className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs px-4 py-2 rounded-xl transition"
-              >
-                Yangi Amaliyot Qo'shish
-              </button>
+              <h3 className="text-sm font-black text-slate-200">Ombor Offcuts (Qoldiq/Brak) Logi</h3>
             </div>
 
             <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-900/50 border-b border-brand-border text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                    <th className="px-5 py-4">Sana / Vaqt</th>
-                    <th className="px-5 py-4">Mahsulot Nomi</th>
-                    <th className="px-5 py-4">Amaliyot</th>
+                    <th className="px-5 py-4">Sana</th>
+                    <th className="px-5 py-4">Mahsulot</th>
+                    <th className="px-5 py-4">O'lchamlari</th>
                     <th className="px-5 py-4">Miqdori</th>
-                    <th className="px-5 py-4">Narxi (Birlik)</th>
-                    <th className="px-5 py-4">Izohlar / Tafsilotlar</th>
+                    <th className="px-5 py-4">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brand-border/60">
-                  {stockTransactions.map(tx => {
-                    const prod = products.find(p => p.id === tx.productId);
-                    const isKirim = tx.transactionType === 'KIRIM';
+                  {apiOffcuts.map(tx => {
+                    const prod = apiMaterials.find(p => p.id === tx.material);
                     return (
                       <tr key={tx.id} className="text-slate-300 font-semibold text-xs hover:bg-slate-900/20">
                         <td className="px-5 py-4 font-mono text-slate-500">
-                          {new Date(tx.createdAt).toLocaleString('uz-UZ')}
+                          {tx.added_date ? new Date(tx.added_date).toLocaleString('uz-UZ') : '—'}
                         </td>
                         <td className="px-5 py-4">
-                          <div className="font-bold text-slate-200">{prod?.name || 'Noma\'lum mahsulot'}</div>
-                          <span className="text-[10px] text-slate-500 font-mono">{tx.productId}</span>
+                          <div className="font-bold text-slate-200">{prod?.name || 'Noma\'lum'}</div>
+                        </td>
+                        <td className="px-5 py-4 font-mono font-bold">
+                          {tx.length} x {tx.width}
+                        </td>
+                        <td className="px-5 py-4 font-mono font-bold">
+                          {tx.qty}
                         </td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black border ${
-                            isKirim 
+                            tx.status === 'AVAILABLE' 
                               ? 'bg-emerald-500/10 border-emerald-500/20 text-brand-emerald' 
-                              : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+                              : tx.status === 'USED' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
                           }`}>
-                            {isKirim ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                            {isKirim ? 'KIRIM' : 'CHIQIM'}
+                            {tx.status}
                           </span>
-                        </td>
-                        <td className="px-5 py-4 font-mono font-bold">
-                          {isKirim ? '+' : '-'}{tx.quantity} {prod?.unitOfMeasure}
-                        </td>
-                        <td className="px-5 py-4 font-mono">
-                          {tx.unitPrice.toLocaleString()} UZS
-                        </td>
-                        <td className="px-5 py-4 text-slate-400 italic max-w-xs truncate">
-                          {tx.notes || '—'}
                         </td>
                       </tr>
                     );
@@ -385,7 +367,10 @@ export const InventoryBOM: React.FC = () => {
                 {orders.filter(o => ['YANGI_LID', 'ZAMER_BAJARILDI', 'DIZAYN_LOYYAHALASHDA', 'DIZAYN_TASDIQLANDI', 'TZ_PLANNER_TUZILDI'].includes(o.status)).map(order => (
                   <div 
                     key={order.id}
-                    onClick={() => setSelectedBOMOrderId(order.id)}
+                    onClick={() => {
+                      setSelectedBOMOrderId(order.id);
+                      fetchBOMsAPI(parseInt(order.id.replace(/\D/g, '')) || 1);
+                    }}
                     className={`p-3 rounded-xl border transition cursor-pointer select-none ${
                       selectedBOMOrderId === order.id 
                         ? 'bg-brand-emerald/10 border-brand-emerald text-slate-100' 
@@ -394,248 +379,237 @@ export const InventoryBOM: React.FC = () => {
                   >
                     <div className="font-mono text-[10px] font-bold text-slate-500 mb-1">{order.orderNumber}</div>
                     <div className="font-extrabold text-xs text-slate-200">{order.customerName}</div>
-                    <div className="mt-2 text-[10px] font-semibold text-slate-500 flex justify-between">
-                      <span>Status:</span>
-                      <span className="text-brand-emerald">{order.status}</span>
-                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* BOM Editor Panel */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {currentBOMOrder ? (
-                <>
-                  <div className="bg-brand-surface border border-brand-border p-5 rounded-2xl flex justify-between items-center">
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-extrabold block uppercase mb-1">Buyurtma Ma'lumoti</span>
-                      <h3 className="text-base font-black text-slate-100">{currentBOMOrder.customerName} ({currentBOMOrder.orderNumber})</h3>
-                      <p className="text-xs text-slate-400 mt-1 font-semibold">Turi: {currentBOMOrder.source} • Status: {currentBOMOrder.status}</p>
+            {/* BOM Editor */}
+            <div className="flex-1 flex flex-col h-full relative">
+              {!selectedBOMOrderId ? (
+                <div className="flex-1 flex items-center justify-center text-slate-500 text-sm font-semibold">
+                  Chap tomondan buyurtmani tanlang
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col h-full">
+                  <div className="p-6 border-b border-brand-border bg-brand-surface/50">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <h2 className="text-lg font-black text-slate-100">BOM Muharriri</h2>
+                        <p className="text-xs text-slate-400 mt-1">Buyurtma: <span className="font-mono font-bold text-slate-300">{currentBOMOrder?.orderNumber}</span> ({currentBOMOrder?.customerName})</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-slate-500 font-extrabold uppercase mb-1">Jami Xomashyo Tannarxi</div>
+                        <div className="text-2xl font-black text-brand-emerald font-mono">{totalBOMCost.toLocaleString()} UZS</div>
+                      </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="text-[10px] text-slate-500 font-extrabold block mb-1">Xomashyo Jami Tannarxi</span>
-                      <span className="text-lg font-black text-brand-emerald font-mono flex items-center justify-end">
-                        <DollarSign className="w-5 h-5 -mr-1" /> {totalBOMCost.toLocaleString()} UZS
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Add BOM Item Form */}
-                  <div className="bg-brand-surface border border-brand-border p-5 rounded-2xl">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-4">Material / Xomashyo Retseptga Qo'shish</h4>
-                    <form onSubmit={handleAddBOMItemSubmit} className="flex flex-col md:flex-row items-end gap-4">
-                      
-                      <div className="flex-1 space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Material Turini Tanlang</label>
-                        <select 
-                          value={newBOMItemForm.productId}
-                          onChange={(e) => setNewBOMItemForm({ ...newBOMItemForm, productId: e.target.value })}
-                          className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none"
-                        >
-                          {products.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} ({p.quantityInStock} {p.unitOfMeasure} mavjud)</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="w-32 space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Miqdori</label>
-                        <input 
-                          type="number" 
-                          min="0.01"
-                          step="0.01"
-                          value={newBOMItemForm.requiredQuantity}
-                          onChange={(e) => setNewBOMItemForm({ ...newBOMItemForm, requiredQuantity: Number(e.target.value) })}
-                          className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2 text-xs font-bold text-slate-200 focus:outline-none"
-                        />
-                      </div>
-
-                      <button 
-                        type="submit"
-                        className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-1.5"
+                    <form onSubmit={handleAddBOMItemSubmit} className="flex gap-3">
+                      <select 
+                        required
+                        value={newBOMItemForm.productId}
+                        onChange={(e) => setNewBOMItemForm({...newBOMItemForm, productId: Number(e.target.value)})}
+                        className="flex-1 bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
                       >
-                        <Plus className="w-4 h-4" /> BOMga Qo'shish
+                        <option value={0}>Material tanlang...</option>
+                        {apiMaterials.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} ({getCategoryLabel(p.category)}) - Ombor: {p.total_stock}</option>
+                        ))}
+                      </select>
+
+                      <input 
+                        type="number"
+                        required
+                        min="0.1"
+                        step="0.1"
+                        placeholder="Miqdor"
+                        value={newBOMItemForm.requiredQuantity}
+                        onChange={(e) => setNewBOMItemForm({...newBOMItemForm, requiredQuantity: Number(e.target.value)})}
+                        className="w-32 bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
+                      />
+
+                      <button type="submit" className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark px-5 py-2.5 rounded-xl font-black text-xs transition">
+                        Qo'shish
                       </button>
                     </form>
                   </div>
 
-                  {/* Order's BOM Table */}
-                  <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-slate-900/50 border-b border-brand-border text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                          <th className="px-5 py-4">Mahsulot Nomi</th>
-                          <th className="px-5 py-4">Kerakli Miqdor</th>
-                          <th className="px-5 py-4">Bron Qilingan</th>
-                          <th className="px-5 py-4">Birlik Narx</th>
-                          <th className="px-5 py-4">Jami Narx</th>
-                          <th className="px-5 py-4 text-center">O'chirish</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-brand-border/60">
-                        {orderBOMItems.length === 0 ? (
-                          <tr>
-                            <td colSpan={6} className="text-center py-10 text-xs text-slate-500 font-bold">
-                              Materiallar retseptga biriktirilmagan. Yuqoridan qo'shishingiz mumkin.
-                            </td>
+                  <div className="flex-1 overflow-y-auto p-6 bg-brand-dark">
+                    <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden shadow-lg shadow-black/20">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-900/50 border-b border-brand-border text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                            <th className="px-5 py-4">Xomashyo</th>
+                            <th className="px-5 py-4">Kerakli Miqdor</th>
+                            <th className="px-5 py-4">Tannarx (Birlik)</th>
+                            <th className="px-5 py-4 text-right">Summa</th>
+                            <th className="px-5 py-4 text-center">Harakat</th>
                           </tr>
-                        ) : (
-                          orderBOMItems.map(item => {
-                            const p = products.find(prod => prod.id === item.productId);
-                            const price = p?.averagePrice || 0;
-                            return (
-                              <tr key={item.id} className="text-slate-300 font-semibold text-xs hover:bg-slate-900/20">
-                                <td className="px-5 py-4">
-                                  <div className="font-bold text-slate-200">{p?.name || 'Noma\'lum'}</div>
-                                  <span className="text-[10px] text-slate-500 font-mono">{item.productId}</span>
-                                </td>
-                                <td className="px-5 py-4 font-mono font-bold">
-                                  {item.requiredQuantity} {p?.unitOfMeasure}
-                                </td>
-                                <td className="px-5 py-4 text-yellow-500 font-mono">
-                                  {item.allocatedQuantity} {p?.unitOfMeasure}
-                                </td>
-                                <td className="px-5 py-4 font-mono">
-                                  {price.toLocaleString()} UZS
-                                </td>
-                                <td className="px-5 py-4 font-mono font-bold text-slate-100">
-                                  {(item.requiredQuantity * price).toLocaleString()} UZS
-                                </td>
-                                <td className="px-5 py-4 text-center">
-                                  <button 
-                                    onClick={() => removeBOMItem(item.id)}
-                                    className="p-1 text-rose-500 hover:bg-rose-500/10 rounded transition"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-brand-border/60">
+                          {orderBOMItems.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="px-5 py-8 text-center text-xs font-medium text-slate-500">
+                                Ushbu buyurtma uchun hali materiallar tanlanmagan.
+                              </td>
+                            </tr>
+                          ) : (
+                            orderBOMItems.map(item => {
+                              const p = apiMaterials.find(prod => prod.id === item.material);
+                              const price = Number(p?.average_price) || 0;
+                              const rowTotal = Number(item.required_qty) * price;
+                              
+                              return (
+                                <tr key={item.id} className="text-slate-300 font-semibold text-xs transition hover:bg-slate-900/20">
+                                  <td className="px-5 py-4">
+                                    <div className="font-bold text-slate-200">{p?.name || 'Noma\'lum material'}</div>
+                                    <span className="text-[10px] text-slate-500 font-medium">Birlik narxi: {price.toLocaleString()} UZS</span>
+                                  </td>
+                                  <td className="px-5 py-4 font-mono text-amber-500 font-bold">
+                                    {item.required_qty}
+                                  </td>
+                                  <td className="px-5 py-4 font-mono text-slate-400">
+                                    {price.toLocaleString()} UZS
+                                  </td>
+                                  <td className="px-5 py-4 font-mono font-black text-brand-emerald text-right">
+                                    {rowTotal.toLocaleString()} UZS
+                                  </td>
+                                  <td className="px-5 py-4 text-center">
+                                    <button 
+                                      className="p-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition"
+                                      title="O'chirish"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <div className="text-center py-20 text-slate-500 font-bold text-sm">
-                  Kichik TZ / Loyihalash bosqichidagi buyurtma tanlanmagan.
                 </div>
               )}
             </div>
-
           </div>
         )}
-
       </div>
 
-      {/* Kirim / Chiqim Qo'shish Modal */}
+      {/* Add Transaction Modal */}
       {showAddTxModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-brand-surface border border-brand-border w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
-            <div className="px-6 py-4 border-b border-brand-border flex justify-between items-center bg-slate-900/50">
-              <h2 className="text-base font-black text-slate-100">Omborga Kirim / Chiqim Amaliyoti</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-brand-surface border border-brand-border rounded-2xl w-full max-w-md overflow-hidden shadow-2xl shadow-black/50">
+            <div className="p-5 border-b border-brand-border flex justify-between items-center bg-slate-900/30">
+              <h3 className="font-extrabold text-slate-100 flex items-center gap-2">
+                <Plus className="w-4.5 h-4.5 text-brand-emerald" /> Yangi Material Qo'shish
+              </h3>
               <button 
                 onClick={() => setShowAddTxModal(false)}
-                className="text-slate-500 hover:text-slate-300 font-bold"
+                className="text-slate-500 hover:text-slate-300 transition"
               >
                 ✕
               </button>
             </div>
             
-            <form onSubmit={handleStockTxSubmit} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-400 uppercase">Material / Tovar</label>
-                <select 
-                  value={txForm.productId}
-                  onChange={(e) => {
-                    const prod = products.find(p => p.id === e.target.value);
-                    setTxForm({ 
-                      ...txForm, 
-                      productId: e.target.value,
-                      unitPrice: prod?.averagePrice || 10000 
-                    });
-                  }}
+            <form onSubmit={handleStockTxSubmit} className="p-5 space-y-4">
+              <div>
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Material Nomi</label>
+                <input 
+                  type="text" 
                   required
-                  className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none"
+                  value={txForm.name}
+                  onChange={e => setTxForm({...txForm, name: e.target.value})}
+                  className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
+                  placeholder="Masalan: MDF Akril Oq..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Kategoriya</label>
+                <select 
+                  value={txForm.categoryId}
+                  onChange={e => setTxForm({...txForm, categoryId: Number(e.target.value)})}
+                  className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
                 >
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.unitOfMeasure})</option>
+                  <option value={0}>Tanlang</option>
+                  {apiCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black text-slate-400 uppercase">Amaliyot Turi</label>
-                  <select 
-                    value={txForm.transactionType}
-                    onChange={(e) => setTxForm({ ...txForm, transactionType: e.target.value as any })}
-                    className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none"
-                  >
-                    <option value="KIRIM">Kirim (Kassadan materialga)</option>
-                    <option value="CHIQIM">Chiqim (Sexga chiqish)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black text-slate-400 uppercase">Miqdori (Qoldiq bo'lsa kasr kiriting)</label>
-                  <input 
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    required
-                    value={txForm.quantity}
-                    onChange={(e) => setTxForm({ ...txForm, quantity: Number(e.target.value) })}
-                    className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2 text-xs font-bold text-slate-200 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-400 uppercase">Birlik Narxi (UZS)</label>
-                <input 
-                  type="number"
-                  required
-                  value={txForm.unitPrice}
-                  onChange={(e) => setTxForm({ ...txForm, unitPrice: Number(e.target.value) })}
-                  className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2 text-xs font-bold text-slate-200 focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-400 uppercase">Izoh (Yetkazib beruvchi / Sababi)</label>
-                <input 
-                  type="text"
-                  placeholder="Masalan: MebelAlimPlas MChJdan yetkazildi"
-                  value={txForm.notes}
-                  onChange={(e) => setTxForm({ ...txForm, notes: e.target.value })}
+              <div>
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">O'lchov Birligi</label>
+                <select 
+                  value={txForm.unitId}
+                  onChange={e => setTxForm({...txForm, unitId: Number(e.target.value)})}
                   className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
-                />
+                >
+                  <option value={0}>Tanlang</option>
+                  {apiUnits.map(unit => (
+                    <option key={unit.id} value={unit.id}>{unit.name} ({unit.short_name})</option>
+                  ))}
+                </select>
               </div>
 
-              <div className="flex gap-3 justify-end pt-4">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-300 select-none cursor-pointer mt-2">
+                <input 
+                  type="checkbox"
+                  checked={txForm.is_sheet}
+                  onChange={e => setTxForm({...txForm, is_sheet: e.target.checked})}
+                  className="accent-brand-emerald w-4 h-4 bg-slate-900 border-slate-700"
+                />
+                Material List (Plita) ko'rinishidami?
+              </label>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Uzunligi (m)</label>
+                  <input type="number" step="0.001" value={txForm.length} onChange={e => setTxForm({...txForm, length: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Eni (m)</label>
+                  <input type="number" step="0.001" value={txForm.width} onChange={e => setTxForm({...txForm, width: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Qalinligi (mm)</label>
+                  <input type="number" step="0.01" value={txForm.thickness} onChange={e => setTxForm({...txForm, thickness: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Barkod</label>
+                  <input type="text" value={txForm.barcode} onChange={e => setTxForm({...txForm, barcode: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Minimal Qoldiq</label>
+                  <input type="number" step="0.01" required value={txForm.min_threshold} onChange={e => setTxForm({...txForm, min_threshold: e.target.value})} className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald" />
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
                 <button 
-                  type="button" 
+                  type="button"
                   onClick={() => setShowAddTxModal(false)}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2 rounded-xl border border-brand-border transition"
+                  className="flex-1 bg-brand-dark border border-brand-border text-slate-300 font-bold text-xs py-2.5 rounded-xl hover:bg-slate-800 transition"
                 >
                   Bekor qilish
                 </button>
                 <button 
                   type="submit"
-                  className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark text-xs font-black px-5 py-2 rounded-xl transition"
+                  disabled={isLoading}
+                  className="flex-1 bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs py-2.5 rounded-xl transition"
                 >
-                  Amalga oshirish
+                  {isLoading ? 'Saqlanmoqda...' : 'Saqlash'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 };

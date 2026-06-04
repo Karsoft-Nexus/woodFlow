@@ -1,13 +1,25 @@
 import axios from 'axios';
-import type { FinancialTransaction, WorkerDailyStatus, Order, Worker, ProductionStage } from '../types';
+import type { FinancialTransaction, WorkerDailyStatus, Order, Worker, ProductionStage, Material, MaterialCategory, Offcut, BOM, PaginatedResponse, Unit } from '../types';
 
 // API client instance
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || 'https://alimplas.injiniring-kompaniya.uz/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 5000,
+});
+
+api.interceptors.request.use((config) => {
+  const defaultToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgzMTk5MjYxLCJpYXQiOjE3ODA2MDcyNjEsImp0aSI6ImMyMDg4NTk4Nzc3ZDRiYzZiNmY2Yjk4Njk5NDc3MzIxIiwidXNlcl9pZCI6IjEifQ.oWm59ByVuJQlWwqwSWsCvyedlpINVyFiwY3nh-0U8vg';
+  const token = localStorage.getItem('access_token') || defaultToken;
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    // Save to local storage automatically so the user has it stored
+    localStorage.setItem('access_token', token);
+  }
+  return config;
 });
 
 // Types for responses if needed
@@ -58,6 +70,44 @@ export const financeApi = {
   },
   addTransaction: async (tx: Omit<FinancialTransaction, 'id' | 'createdAt'>) => {
     const response = await api.post<FinancialTransaction>('/finance/transactions/', tx);
+    return response.data;
+  },
+};
+
+export const warehouseApi = {
+  getUnits: async () => {
+    const response = await api.get<PaginatedResponse<Unit>>('/units');
+    return response.data;
+  },
+  getCategories: async () => {
+    const response = await api.get<PaginatedResponse<MaterialCategory>>('/categories');
+    return response.data;
+  },
+  getMaterials: async (params?: { low_stock?: boolean; category?: number }) => {
+    const response = await api.get<PaginatedResponse<Material>>('/materials', { params });
+    return response.data;
+  },
+  createMaterial: async (data: Omit<Material, 'id'>) => {
+    const response = await api.post<{ message: string; data: Material }>('/materials', data);
+    return response.data;
+  },
+  getOffcuts: async () => {
+    const response = await api.get<PaginatedResponse<Offcut>>('/offcuts');
+    return response.data;
+  },
+  createOffcut: async (data: Omit<Offcut, 'id'>) => {
+    const response = await api.post<{ message: string; data: Offcut }>('/offcuts', data);
+    return response.data;
+  },
+};
+
+export const bomApi = {
+  getBOMs: async (orderId?: number) => {
+    const response = await api.get<PaginatedResponse<BOM>>('/bom', { params: { order: orderId } });
+    return response.data;
+  },
+  createBOM: async (data: Omit<BOM, 'id'>) => {
+    const response = await api.post<{ message: string; data: BOM }>('/bom', data);
     return response.data;
   },
 };
