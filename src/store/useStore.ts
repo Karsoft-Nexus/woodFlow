@@ -770,11 +770,12 @@ export const useStore = create<AppState>((set, get) => ({
         warehouseApi.getOffcuts(),
         warehouseApi.getUnits()
       ]);
+      const extractArray = (res: any) => Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (Array.isArray(res?.results) ? res.results : []));
       set({ 
-        apiMaterials: materialsRes.data || [], 
-        apiCategories: categoriesRes.data || [],
-        apiUnits: unitsRes.data || [],
-        apiOffcuts: offcutsRes.data || [],
+        apiMaterials: extractArray(materialsRes), 
+        apiCategories: extractArray(categoriesRes),
+        apiUnits: extractArray(unitsRes),
+        apiOffcuts: extractArray(offcutsRes),
         isLoading: false 
       });
     } catch (err: any) {
@@ -799,8 +800,9 @@ export const useStore = create<AppState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await bomApi.getBOMs(orderId);
+      const extractArray = (res: any) => Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (Array.isArray(res?.results) ? res.results : []));
       set({ 
-        apiBOMs: response.data || [],
+        apiBOMs: extractArray(response),
         isLoading: false 
       });
     } catch (err: any) {
