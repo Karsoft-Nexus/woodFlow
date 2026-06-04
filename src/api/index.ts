@@ -10,6 +10,18 @@ export const api = axios.create({
   timeout: 5000,
 });
 
+api.interceptors.request.use((config) => {
+  const defaultToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgzMTk5MjYxLCJpYXQiOjE3ODA2MDcyNjEsImp0aSI6ImMyMDg4NTk4Nzc3ZDRiYzZiNmY2Yjk4Njk5NDc3MzIxIiwidXNlcl9pZCI6IjEifQ.oWm59ByVuJQlWwqwSWsCvyedlpINVyFiwY3nh-0U8vg';
+  const token = localStorage.getItem('access_token') || defaultToken;
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    // Save to local storage automatically so the user has it stored
+    localStorage.setItem('access_token', token);
+  }
+  return config;
+});
+
 // Types for responses if needed
 export interface BoardDataResponse {
   orders: Order[];
