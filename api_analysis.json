@@ -1,0 +1,155 @@
+{
+  "1. Admins (Administratorlar bo'limi)": [
+    "GET /api/v1/admins/profile",
+    "PUT /api/v1/admins/profile",
+    "PATCH /api/v1/admins/profile"
+  ],
+  "Roles": [
+    "GET /api/v1/admins/roles",
+    "POST /api/v1/admins/roles",
+    "GET /api/v1/admins/roles/{id}",
+    "PUT /api/v1/admins/roles/{id}",
+    "PATCH /api/v1/admins/roles/{id}",
+    "DELETE /api/v1/admins/roles/{id}"
+  ],
+  "Users": [
+    "GET /api/v1/admins/user-salaries",
+    "POST /api/v1/admins/user-salaries",
+    "GET /api/v1/admins/user-salaries/{id}",
+    "PUT /api/v1/admins/user-salaries/{id}",
+    "PATCH /api/v1/admins/user-salaries/{id}",
+    "DELETE /api/v1/admins/user-salaries/{id}",
+    "GET /api/v1/admins/users",
+    "POST /api/v1/admins/users",
+    "GET /api/v1/admins/users/{id}",
+    "PUT /api/v1/admins/users/{id}",
+    "PATCH /api/v1/admins/users/{id}",
+    "DELETE /api/v1/admins/users/{id}"
+  ],
+  "Analytics": [
+    "GET /api/v1/analytics/dashboard-stats",
+    "GET /api/v1/analytics/salary-report"
+  ],
+  "Production - BOM": [
+    "GET /api/v1/bom",
+    "POST /api/v1/bom",
+    "GET /api/v1/bom/{id}",
+    "POST /api/v1/bom/{id}",
+    "PUT /api/v1/bom/{id}",
+    "PATCH /api/v1/bom/{id}",
+    "DELETE /api/v1/bom/{id}"
+  ],
+  "Warehouse - Categories": [
+    "GET /api/v1/categories",
+    "POST /api/v1/categories",
+    "GET /api/v1/categories/{id}",
+    "PUT /api/v1/categories/{id}",
+    "PATCH /api/v1/categories/{id}",
+    "DELETE /api/v1/categories/{id}"
+  ],
+  "5. Auth & Accounts (Tizimga kirish va Profillar)": [
+    "POST /api/v1/change-password",
+    "POST /api/v1/login",
+    "GET /api/v1/profile",
+    "PUT /api/v1/profile",
+    "PATCH /api/v1/profile",
+    "GET /api/v1/schema/"
+  ],
+  "CRM - Customers": [
+    "GET /api/v1/customers",
+    "POST /api/v1/customers",
+    "GET /api/v1/customers/{id}",
+    "POST /api/v1/customers/{id}",
+    "PUT /api/v1/customers/{id}",
+    "PATCH /api/v1/customers/{id}",
+    "DELETE /api/v1/customers/{id}"
+  ],
+  "Finance": [
+    "GET /api/v1/finance/transactions/",
+    "POST /api/v1/finance/transactions/",
+    "GET /api/v1/finance/transactions/{id}/",
+    "POST /api/v1/finance/transactions/{id}/",
+    "PUT /api/v1/finance/transactions/{id}/",
+    "PATCH /api/v1/finance/transactions/{id}/",
+    "DELETE /api/v1/finance/transactions/{id}/"
+  ],
+  "Warehouse - Materials": [
+    "GET /api/v1/materials",
+    "POST /api/v1/materials",
+    "GET /api/v1/materials/{id}",
+    "POST /api/v1/materials/{id}",
+    "PUT /api/v1/materials/{id}",
+    "PATCH /api/v1/materials/{id}",
+    "DELETE /api/v1/materials/{id}"
+  ],
+  "Warehouse - Offcuts": [
+    "GET /api/v1/offcuts",
+    "POST /api/v1/offcuts",
+    "GET /api/v1/offcuts/{id}",
+    "PUT /api/v1/offcuts/{id}",
+    "PATCH /api/v1/offcuts/{id}",
+    "DELETE /api/v1/offcuts/{id}"
+  ],
+  "CRM - Orders": [
+    "GET /api/v1/orders",
+    "POST /api/v1/orders",
+    "GET /api/v1/orders/{id}",
+    "POST /api/v1/orders/{id}",
+    "PUT /api/v1/orders/{id}",
+    "PATCH /api/v1/orders/{id}",
+    "DELETE /api/v1/orders/{id}"
+  ],
+  "CRM - Order Workflow": [
+    "POST /api/v1/orders/{id}/approve-design",
+    "POST /api/v1/orders/{id}/assign-zamer",
+    "POST /api/v1/orders/{id}/sign-contract",
+    "POST /api/v1/orders/{id}/upload-design",
+    "POST /api/v1/orders/{id}/upload-zamer"
+  ],
+  "Production - Stages": [
+    "GET /api/v1/production-stages",
+    "POST /api/v1/production-stages",
+    "GET /api/v1/production-stages/{id}",
+    "POST /api/v1/production-stages/{id}",
+    "PUT /api/v1/production-stages/{id}",
+    "PATCH /api/v1/production-stages/{id}",
+    "DELETE /api/v1/production-stages/{id}",
+    "POST /api/v1/production/stages/{id}/finish/",
+    "POST /api/v1/production/stages/{id}/start/"
+  ],
+  "Production - Frontend Board": [
+    "GET /api/v1/production/board/"
+  ],
+  "Warehouse - Reservations": [
+    "GET /api/v1/reservations",
+    "POST /api/v1/reservations",
+    "GET /api/v1/reservations/{id}",
+    "PUT /api/v1/reservations/{id}",
+    "PATCH /api/v1/reservations/{id}",
+    "DELETE /api/v1/reservations/{id}",
+    "POST /api/v1/reservations/consume-reservation",
+    "POST /api/v1/reservations/create-reservation"
+  ],
+  "Warehouse - Transactions": [
+    "GET /api/v1/transactions",
+    "POST /api/v1/transactions",
+    "GET /api/v1/transactions/{id}",
+    "PUT /api/v1/transactions/{id}",
+    "PATCH /api/v1/transactions/{id}",
+    "DELETE /api/v1/transactions/{id}"
+  ],
+  "Warehouse - Units": [
+    "GET /api/v1/units",
+    "POST /api/v1/units",
+    "GET /api/v1/units/{id}",
+    "PUT /api/v1/units/{id}",
+    "PATCH /api/v1/units/{id}",
+    "DELETE /api/v1/units/{id}"
+  ],
+  "Production - Frontend Payouts": [
+    "GET /api/v1/workers/{id}/payouts/"
+  ],
+  "Production - Workers": [
+    "POST /api/v1/workers/{id}/set-daily-status/"
+  ]
+}

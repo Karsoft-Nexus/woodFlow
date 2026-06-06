@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { Worker } from '../../types';
-import { productionApi } from '../../api';
-import type { PayoutResponse } from '../../api';
+import { productionService } from '../../services/production/production.service';
+import type { IPayoutResponse } from '../../services/production/production.types';
 import { 
   Lock, 
   User, 
@@ -28,14 +28,14 @@ export const WorkerTablet: React.FC = () => {
     products,
     addOffcut,
     financeTransactions,
-    fetchInitialData,
+    fetchProductionBoard,
     isLoading
   } = useStore();
 
   const [pin, setPin] = useState('');
   const [activeWorker, setActiveWorker] = useState<Worker | null>(null);
   const [error, setError] = useState('');
-  const [payouts, setPayouts] = useState<PayoutResponse[]>([]);
+  const [payouts, setPayouts] = useState<IPayoutResponse[]>([]);
   const [payoutsLoading, setPayoutsLoading] = useState(false);
 
   // Offcut modal states
@@ -46,7 +46,7 @@ export const WorkerTablet: React.FC = () => {
   const [offcutWidth, setOffcutWidth] = useState('');
 
   useEffect(() => {
-    fetchInitialData();
+    fetchProductionBoard();
   }, []);
 
   // Map worker to simple pin codes (w1 -> 1111, w2 -> 2222, etc.)
@@ -59,7 +59,7 @@ export const WorkerTablet: React.FC = () => {
   const loadWorkerPayouts = async (workerId: string) => {
     setPayoutsLoading(true);
     try {
-      const data = await productionApi.getWorkerPayouts(workerId);
+      const data = await productionService.getWorkerPayouts(workerId);
       if (Array.isArray(data)) {
         setPayouts(data);
       } else {

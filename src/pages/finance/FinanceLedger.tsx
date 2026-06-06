@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const FinanceLedger: React.FC = () => {
-  const { financeTransactions, addFinancialTransaction, orders, fetchInitialData, isLoading } = useStore();
+  const { financeTransactions, addFinancialTransaction, orders, fetchFinance, isLoading } = useStore();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
@@ -25,7 +25,7 @@ export const FinanceLedger: React.FC = () => {
   const [orderId, setOrderId] = useState('');
 
   useEffect(() => {
-    fetchInitialData();
+    fetchFinance();
   }, []);
 
   // Calculate totals

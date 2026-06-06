@@ -46,10 +46,10 @@ const columns: { status: OrderStatus; label: string; color: string }[] = [
 ];
 
 export const KanbanBoard: React.FC = () => {
-  const { orders, productionStages, updateOrderStatus, fetchInitialData, isLoading } = useStore();
+  const { orders, productionStages, updateOrderStatus, fetchOrders, isLoading } = useStore();
 
   useEffect(() => {
-    fetchInitialData();
+    fetchOrders();
   }, []);
 
   const getSourceIcon = (source: string) => {

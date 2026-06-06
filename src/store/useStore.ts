@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import type { Order, Worker, ProductionStage, FinancialTransaction, Product, OrderStatus, WorkerDailyStatus, BOMItem, StockTransaction, WallDimensions } from '../types';
-import { productionApi, financeApi, ordersApi, authApi } from '../api';
+import { productionService as productionApi } from '../services/production/production.service';
+import { financeService as financeApi } from '../services/finance/finance.service';
+import { ordersService as ordersApi } from '../services/orders/orders.service';
+import { authService as authApi } from '../services/auth/auth.service';
+import { inventoryService as inventoryApi } from '../services/inventory/inventory.service';
+import { bomService as bomApi } from '../services/bom/bom.service';
+import { warehouseService as warehouseTransactionApi } from '../services/warehouse/warehouse.service';
 
 function mapBackendOrderToFrontend(bo: any): Order {
   const statusMap: Record<string, OrderStatus> = {
@@ -70,15 +76,18 @@ interface AppState {
   // Actions
   login: (phone: string, password: string) => Promise<boolean>;
   logout: () => void;
-  fetchInitialData: () => Promise<void>;
+  fetchOrders: () => Promise<void>;
+  fetchInventory: () => Promise<void>;
+  fetchProductionBoard: () => Promise<void>;
+  fetchFinance: () => Promise<void>;
   updateWorkerDailyStatus: (workerId: string, status: WorkerDailyStatus) => Promise<void>;
   startStage: (stageId: string, workerId: string) => Promise<void>;
   finishStage: (stageId: string) => Promise<void>;
   addFinancialTransaction: (tx: Omit<FinancialTransaction, 'id' | 'createdAt'>) => Promise<void>;
   addOrder: (order: Omit<Order, 'id' | 'orderNumber' | 'status' | 'isContractSigned' | 'isDesignApproved'>) => Promise<void>;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
-  assignWorkerToStage: (stageId: string, workerId: string) => void;
-  addOffcut: (productId: string, length: number, width: number, orderId: string) => void;
+  updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  assignWorkerToStage: (stageId: string, workerId: string) => Promise<void>;
+  addOffcut: (productId: string, length: number, width: number, orderId: string) => Promise<void>;
 
   // CRM / Agent 1 Actions
   assignZamerchik: (orderId: string, workerId: string, scheduledAt: string) => Promise<void>;
@@ -89,9 +98,9 @@ interface AppState {
   signContract: (orderId: string, totalPrice: number, advancePayment: number, paymentMethod: 'CASH' | 'CARD' | 'BANK_TRANSFER') => Promise<boolean>;
 
   // Inventory & BOM / Agent 2 Actions
-  addBOMItem: (orderId: string, productId: string, requiredQuantity: number) => void;
-  removeBOMItem: (bomItemId: string) => void;
-  addStockTransaction: (tx: Omit<StockTransaction, 'id' | 'createdAt'>) => void;
+  addBOMItem: (orderId: string, productId: string, requiredQuantity: number) => Promise<void>;
+  removeBOMItem: (bomItemId: string) => Promise<void>;
+  addStockTransaction: (tx: Omit<StockTransaction, 'id' | 'createdAt'>) => Promise<void>;
 }
 
 // Initial Mock Data
@@ -293,10 +302,8 @@ export const useStore = create<AppState>((set, get) => ({
   login: async (phone, password) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authApi.login(phone, password);
-      const token = typeof response.data?.token === 'object' 
-        ? response.data?.token?.access 
-        : response.data?.token;
+      const response = await authApi.login({ phone, password });
+      const token = response.data?.token;
       if (token) {
         localStorage.setItem('token', token);
         set({ token, isAuthenticated: true, isLoading: false });
@@ -316,38 +323,101 @@ export const useStore = create<AppState>((set, get) => ({
     set({ token: null, isAuthenticated: false });
   },
 
-  fetchInitialData: async () => {
+  fetchOrders: async () => {
     set({ isLoading: true });
     try {
-      const boardData = await productionApi.getBoardData();
-      const transactions = await financeApi.getTransactions();
-      
+      const backendOrders = await ordersApi.getOrders();
       let ordersList = initialOrders;
-      try {
-        const backendOrders = await ordersApi.getOrders();
-        if (Array.isArray(backendOrders) && backendOrders.length > 0) {
-          ordersList = backendOrders.map(mapBackendOrderToFrontend);
-        } else if (boardData && Array.isArray(boardData.orders) && boardData.orders.length > 0) {
-          ordersList = boardData.orders.map(mapBackendOrderToFrontend);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch orders from dedicated API, using boardData or initialOrders:", err);
-        if (boardData && Array.isArray(boardData.orders)) {
-          ordersList = boardData.orders.map(mapBackendOrderToFrontend);
-        }
+      if (Array.isArray(backendOrders) && backendOrders.length > 0) {
+        ordersList = backendOrders.map(mapBackendOrderToFrontend);
+      }
+      set({ orders: ordersList, isLoading: false, error: null });
+    } catch (err: any) {
+      console.warn("API initialization failed, using initial mock data:", err);
+      set({ isLoading: false, error: err.message || "Failed to load orders data" });
+    }
+  },
+
+  fetchInventory: async () => {
+    set({ isLoading: true });
+    try {
+      const [materialsRes, bomRes] = await Promise.allSettled([
+        inventoryApi.getMaterials(),
+        bomApi.getBOMs()
+      ]);
+      
+      let fetchedProducts = initialProducts;
+      if (materialsRes.status === 'fulfilled' && materialsRes.value.data) {
+        fetchedProducts = materialsRes.value.data.map((m: any) => ({
+          id: String(m.id),
+          name: m.name,
+          category: (m.category_name ? String(m.category_name).toUpperCase() : 'PLATES') as any,
+          unitOfMeasure: (m.unit_code ? String(m.unit_code).toUpperCase() : 'PIECE') as any,
+          quantityInStock: m.total_stock ? Number(m.total_stock) : 0,
+          reservedQuantity: (m.total_stock && m.available_stock) ? Number(m.total_stock) - Number(m.available_stock) : 0,
+          availableQuantity: m.available_stock ? Number(m.available_stock) : 0,
+          averagePrice: m.average_price ? Number(m.average_price) : 0,
+          minThreshold: m.min_threshold ? Number(m.min_threshold) : 10
+        }));
+      }
+
+      let fetchedBOMs = initialBOMItems;
+      if (bomRes.status === 'fulfilled' && bomRes.value.data) {
+        fetchedBOMs = bomRes.value.data.map((b: any) => ({
+          id: String(b.id),
+          orderId: String(b.order),
+          productId: String(b.material),
+          requiredQuantity: b.required_qty ? Number(b.required_qty) : 0,
+          allocatedQuantity: b.actual_allocated_qty ? Number(b.actual_allocated_qty) : 0,
+          unitPriceAtReservation: 0
+        }));
       }
 
       set({
+        products: fetchedProducts.length > 0 ? fetchedProducts : initialProducts,
+        bomItems: fetchedBOMs.length > 0 ? fetchedBOMs : initialBOMItems,
+        isLoading: false,
+        error: null,
+      });
+    } catch (err: any) {
+      console.warn("API initialization failed:", err);
+      set({ isLoading: false, error: err.message || "Failed to load inventory data" });
+    }
+  },
+
+  fetchProductionBoard: async () => {
+    set({ isLoading: true });
+    try {
+      const boardData = await productionApi.getBoardData();
+      let ordersList = initialOrders;
+      if (boardData && Array.isArray(boardData.orders) && boardData.orders.length > 0) {
+        ordersList = boardData.orders.map(mapBackendOrderToFrontend);
+      }
+      set({
         orders: ordersList,
-        workers: boardData && Array.isArray(boardData.workers) ? boardData.workers : initialWorkers,
-        productionStages: boardData && Array.isArray(boardData.productionStages) ? boardData.productionStages : initialProductionStages,
+        workers: Array.isArray(boardData.workers) ? boardData.workers : initialWorkers,
+        productionStages: Array.isArray(boardData.productionStages) ? (boardData.productionStages as unknown as ProductionStage[]) : initialProductionStages,
+        isLoading: false,
+        error: null,
+      });
+    } catch (err: any) {
+      console.warn("API initialization failed:", err);
+      set({ isLoading: false, error: err.message || "Failed to load production data" });
+    }
+  },
+
+  fetchFinance: async () => {
+    set({ isLoading: true });
+    try {
+      const transactions = await financeApi.getTransactions();
+      set({
         financeTransactions: Array.isArray(transactions) ? transactions : initialFinanceTransactions,
         isLoading: false,
         error: null,
       });
     } catch (err: any) {
-      console.warn("API initialization failed, using initial mock data:", err);
-      set({ isLoading: false, error: err.message || "Failed to load API data" });
+      console.warn("API initialization failed:", err);
+      set({ isLoading: false, error: err.message || "Failed to load finance data" });
     }
   },
 
@@ -365,121 +435,23 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   startStage: async (stageId, workerId) => {
-    const now = new Date().toISOString();
     try {
       await productionApi.startStage(stageId, workerId);
+      await get().fetchProductionBoard();
     } catch (err) {
-      console.warn("API startStage failed, falling back to local store update:", err);
+      console.error("API startStage failed:", err);
+      throw err;
     }
-    set((state) => {
-      const stage = state.productionStages.find((s) => s.id === stageId);
-      if (!stage) return {};
-
-      let updatedProducts = state.products;
-      let newTransactions = state.stockTransactions;
-
-      // PRD 3.3: Sexda arra (Raskroy) boshlanishi bilan zaxiradagi materiallar ombordan haqiqiy chegiriladi (Deducted)
-      if (stage.stageName === 'RASKROY' && stage.status === 'PENDING') {
-        const orderBom = state.bomItems.filter(b => b.orderId === stage.orderId);
-        
-        updatedProducts = state.products.map(p => {
-          const bom = orderBom.find(b => b.productId === p.id);
-          if (bom) {
-            const qty = bom.allocatedQuantity || bom.requiredQuantity;
-            return {
-              ...p,
-              quantityInStock: Math.max(0, p.quantityInStock - qty),
-              reservedQuantity: Math.max(0, p.reservedQuantity - qty),
-              availableQuantity: Math.max(0, p.quantityInStock - qty - (p.reservedQuantity - qty))
-            };
-          }
-          return p;
-        });
-
-        const txs: StockTransaction[] = orderBom.map(bom => ({
-          id: 'st_' + Math.random().toString(36).substr(2, 9),
-          productId: bom.productId,
-          quantity: bom.allocatedQuantity || bom.requiredQuantity,
-          unitPrice: bom.unitPriceAtReservation,
-          transactionType: 'CHIQIM',
-          createdAt: now,
-          notes: `Raskroy jarayoni boshlandi. Materiallar ombordan chegirildi (Order: ${stage.orderId})`
-        }));
-        newTransactions = [...txs, ...newTransactions];
-      }
-
-      return {
-        products: updatedProducts,
-        stockTransactions: newTransactions,
-        productionStages: state.productionStages.map((s) =>
-          s.id === stageId
-            ? { ...s, status: 'IN_PROGRESS', assignedWorkerId: workerId, actualStartAt: now }
-            : s
-        ),
-      };
-    });
   },
 
   finishStage: async (stageId) => {
-    const now = new Date().toISOString();
     try {
       await productionApi.finishStage(stageId);
+      await get().fetchProductionBoard();
     } catch (err) {
-      console.warn("API finishStage failed, falling back to local store update:", err);
+      console.error("API finishStage failed:", err);
+      throw err;
     }
-    set((state) => {
-      const stage = state.productionStages.find((s) => s.id === stageId);
-      if (!stage) return {};
-
-      const workerId = stage.assignedWorkerId;
-      const payout = stage.stagePrice;
-
-      // Update worker balance
-      const updatedWorkers = workerId
-        ? state.workers.map((w) =>
-            w.id === workerId
-              ? { ...w, payoutBalance: w.payoutBalance + payout }
-              : w
-          )
-        : state.workers;
-
-      // Add financial transaction (Salary expense)
-      const workerName = state.workers.find((w) => w.id === workerId)?.fullName || 'Usta';
-      const orderNum = state.orders.find((o) => o.id === stage.orderId)?.orderNumber || '';
-      
-      const newTx: FinancialTransaction = {
-        id: 't_' + Math.random().toString(36).substr(2, 9),
-        type: 'EXPENSE',
-        category: 'WORKER_PAYOUT',
-        amount: payout,
-        paymentMethod: 'CASH',
-        workerId: workerId,
-        orderId: stage.orderId,
-        description: `${stage.stageName} haqi: ${workerName} (${orderNum})`,
-        createdAt: now,
-      };
-
-      // Check if this was the last stage (USTANOVKA) to mark order as complete
-      let updatedOrders = state.orders;
-      if (stage.stageName === 'USTANOVKA') {
-        updatedOrders = state.orders.map((o) =>
-          o.id === stage.orderId ? { ...o, status: 'YOPILDI_USTANOVKA', actualEndAt: now } : o
-        );
-      } else if (stage.stageName === 'SBORKA') {
-        updatedOrders = state.orders.map((o) =>
-          o.id === stage.orderId ? { ...o, status: 'TAYYOR_OTK' } : o
-        );
-      }
-
-      return {
-        workers: updatedWorkers,
-        productionStages: state.productionStages.map((s) =>
-          s.id === stageId ? { ...s, status: 'DONE', actualEndAt: now } : s
-        ),
-        financeTransactions: [newTx, ...state.financeTransactions],
-        orders: updatedOrders,
-      };
-    });
   },
 
   addFinancialTransaction: async (tx) => {
@@ -517,7 +489,7 @@ export const useStore = create<AppState>((set, get) => ({
           phone: orderData.customerPhone,
           address: ''
         });
-        customerId = customer.id;
+        customerId = customer.data.id;
       } catch (cErr) {
         console.warn("Failed to create customer, using a fallback default customer ID:", cErr);
         customerId = 1; // Default fallback
@@ -532,126 +504,50 @@ export const useStore = create<AppState>((set, get) => ({
         deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 2 weeks default
       });
 
-      const newOrder = mapBackendOrderToFrontend(backendOrder);
+      const newOrder = mapBackendOrderToFrontend(backendOrder.data);
       set((state) => ({
         orders: [newOrder, ...state.orders],
         isLoading: false
       }));
     } catch (err: any) {
       console.error("Failed to add order to API:", err);
-      // Fallback local creation for smooth UX if API fails
-      const id = 'o' + (get().orders.length + 1);
-      const orderNumber = `WF-2026-${String(get().orders.length + 1).padStart(3, '0')}`;
-      const newOrder: Order = {
-        ...orderData,
-        id,
-        orderNumber,
-        status: 'YANGI_LID',
-        isContractSigned: false,
-        isDesignApproved: false
-      };
-      set((state) => ({
-        orders: [newOrder, ...state.orders],
-        isLoading: false,
-        error: err.message
-      }));
+      set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
-  updateOrderStatus: (orderId, status) => {
-    const now = new Date().toISOString();
-    set((state) => {
-      const order = state.orders.find((o) => o.id === orderId);
-      const isTransitioningToProduction = order && order.status !== 'PRODUCTION' && status === 'PRODUCTION';
-      
-      const hasStages = state.productionStages.some((s) => s.orderId === orderId);
-      let newStages = state.productionStages;
-
-      if (status === 'PRODUCTION' && !hasStages) {
-        const plannedStart = order?.plannedStartAt || now;
-        const plannedEnd = order?.plannedEndAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        
-        const stagesToAdd: ProductionStage[] = [
-          { id: `s_${orderId}_1`, orderId, stageName: 'RASKROY', status: 'PENDING', plannedStartAt: plannedStart, plannedEndAt: new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000).toISOString(), stagePrice: 200000 },
-          { id: `s_${orderId}_2`, orderId, stageName: 'KROMKA', status: 'PENDING', plannedStartAt: new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000).toISOString(), plannedEndAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), stagePrice: 150000 },
-          { id: `s_${orderId}_3`, orderId, stageName: 'PRISTADKA', status: 'PENDING', plannedStartAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), plannedEndAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(), stagePrice: 120000 },
-          { id: `s_${orderId}_4`, orderId, stageName: 'SBORKA', status: 'PENDING', plannedStartAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(), plannedEndAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(), stagePrice: 350000 },
-          { id: `s_${orderId}_5`, orderId, stageName: 'USTANOVKA', status: 'PENDING', plannedStartAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(), plannedEndAt: plannedEnd, stagePrice: 250000 }
-        ];
-        newStages = [...state.productionStages, ...stagesToAdd];
-      }
-
-      let updatedProducts = state.products;
-      if (isTransitioningToProduction) {
-        const orderBom = state.bomItems.filter(b => b.orderId === orderId);
-        updatedProducts = state.products.map(p => {
-          const bomItemsForProduct = orderBom.filter(b => b.productId === p.id);
-          if (bomItemsForProduct.length > 0) {
-            const qtyToReserve = bomItemsForProduct.reduce((sum, b) => sum + (b.allocatedQuantity || b.requiredQuantity), 0);
-            const nextReserved = p.reservedQuantity + qtyToReserve;
-            const nextAvailable = Math.max(0, p.quantityInStock - nextReserved);
-            return {
-              ...p,
-              reservedQuantity: nextReserved,
-              availableQuantity: nextAvailable
-            };
-          }
-          return p;
-        });
-      }
-
-      return {
-        orders: state.orders.map((o) =>
-          o.id === orderId ? { ...o, status, actualStartAt: status === 'PRODUCTION' ? now : o.actualStartAt } : o
-        ),
-        productionStages: newStages,
-        products: updatedProducts,
-      };
-    });
+  updateOrderStatus: async (orderId, status) => {
+    try {
+      const orderIdNum = parseInt(orderId.replace(/\D/g, '')) || Number(orderId);
+      await ordersApi.updateOrder(orderIdNum, { status });
+      await get().fetchOrders();
+    } catch (err: any) {
+      console.error("API call to update status failed:", err);
+      throw err;
+    }
   },
 
-  assignWorkerToStage: (stageId, workerId) => {
-    set((state) => ({
-      productionStages: state.productionStages.map((s) =>
-        s.id === stageId ? { ...s, assignedWorkerId: workerId } : s
-      ),
-    }));
+  assignWorkerToStage: async (stageId, workerId) => {
+    try {
+      await get().startStage(stageId, workerId);
+    } catch (err) {
+      console.error("assignWorkerToStage failed", err);
+    }
   },
 
-  addOffcut: (productId, length, width, orderId) => {
-    const now = new Date().toISOString();
-    set((state) => {
-      const product = state.products.find(p => p.id === productId);
-      if (!product) return {};
-
-      const area = Number((length * width).toFixed(2));
-      
-      const newTx: StockTransaction = {
-        id: 'st_' + Math.random().toString(36).substr(2, 9),
-        productId,
-        quantity: area,
-        unitPrice: product.averagePrice,
-        transactionType: 'KIRIM',
-        createdAt: now,
-        notes: `Raskroy bo'lak qoldig'i (${length}m x ${width}m). Order: ${orderId}`
-      };
-
-      const updatedProducts = state.products.map(p => {
-        if (p.id === productId) {
-          return {
-            ...p,
-            quantityInStock: p.quantityInStock + area,
-            availableQuantity: p.availableQuantity + area
-          };
-        }
-        return p;
-      });
-
-      return {
-        products: updatedProducts,
-        stockTransactions: [newTx, ...state.stockTransactions]
-      };
-    });
+  addOffcut: async (productId, length, width) => {
+    try {
+      await inventoryApi.createOffcut({
+        material: Number(productId),
+        length: String(length),
+        width: String(width),
+        quantity: "1"
+      } as any);
+      await get().fetchInventory();
+    } catch (err) {
+      console.error("API createOffcut failed:", err);
+      throw err;
+    }
   },
 
   // CRM / Agent 1 Actions
@@ -659,10 +555,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ isLoading: true });
     try {
       try {
-        await ordersApi.assignZamer(orderId, Number(workerId), scheduledAt);
+        await ordersApi.assignZamer(Number(orderId), { zamerchik: Number(workerId), zamer_scheduled_at: scheduledAt });
       } catch (apiErr) {
         console.warn("Custom assign-zamer action failed, attempting direct PATCH:", apiErr);
-        await ordersApi.updateOrder(orderId, {
+        await ordersApi.updateOrder(Number(orderId), {
           zamerchik: Number(workerId),
           status: 'MEASURE_ASSIGNED'
         });
@@ -680,19 +576,8 @@ export const useStore = create<AppState>((set, get) => ({
       }));
     } catch (err: any) {
       console.error("Failed to assign zamerchik:", err);
-      // Fallback local update
-      set((state) => ({
-        orders: state.orders.map((o) => 
-          o.id === orderId ? { 
-            ...o, 
-            status: 'ZAMER_BELGILANDI', 
-            assignedZamerchikId: workerId, 
-            zamerScheduledAt: scheduledAt 
-          } : o
-        ),
-        isLoading: false,
-        error: err.message
-      }));
+      set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
@@ -701,10 +586,10 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const url = sketchUrl || 'https://images.unsplash.com/photo-1581404917879-53e1925d88df?auto=format&fit=crop&w=400&q=80';
       try {
-        await ordersApi.uploadZamer(orderId, dimensions, url);
+        await ordersApi.uploadZamer(Number(orderId), { zamer_dimensions: JSON.stringify(dimensions), zamer_photos_url: url });
       } catch (apiErr) {
         console.warn("Custom upload-zamer action failed, attempting direct PATCH:", apiErr);
-        await ordersApi.updateOrder(orderId, {
+        await ordersApi.updateOrder(Number(orderId), {
           zamer_dimensions: JSON.stringify(dimensions),
           zamer_photos_url: url,
           status: 'MEASURE_DONE'
@@ -723,19 +608,8 @@ export const useStore = create<AppState>((set, get) => ({
       }));
     } catch (err: any) {
       console.error("Failed to upload zamer details:", err);
-      // Fallback local update
-      set((state) => ({
-        orders: state.orders.map((o) => 
-          o.id === orderId ? { 
-            ...o, 
-            status: 'ZAMER_BAJARILDI', 
-            dimensions, 
-            zamerSketchUrl: sketchUrl || 'https://images.unsplash.com/photo-1581404917879-53e1925d88df?auto=format&fit=crop&w=400&q=80' 
-          } : o
-        ),
-        isLoading: false,
-        error: err.message
-      }));
+      set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
@@ -743,10 +617,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ isLoading: true });
     try {
       try {
-        await ordersApi.uploadDesign(orderId, designUrl);
+        await ordersApi.uploadDesign(Number(orderId), { design_3d_url: designUrl });
       } catch (apiErr) {
         console.warn("Custom upload-design action failed, attempting direct PATCH:", apiErr);
-        await ordersApi.updateOrder(orderId, {
+        await ordersApi.updateOrder(Number(orderId), {
           design_3d_url: designUrl,
           status: 'DESIGNING'
         });
@@ -762,19 +636,9 @@ export const useStore = create<AppState>((set, get) => ({
         isLoading: false
       }));
     } catch (err: any) {
-      console.error("Failed to upload design:", err);
-      // Fallback local update
-      set((state) => ({
-        orders: state.orders.map((o) => 
-          o.id === orderId ? { 
-            ...o, 
-            status: 'DIZAYN_LOYYAHALASHDA', 
-            design3dUrl: designUrl 
-          } : o
-        ),
-        isLoading: false,
-        error: err.message
-      }));
+      console.error("Failed to upload 3D design:", err);
+      set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
@@ -783,10 +647,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ isLoading: true });
     try {
       try {
-        await ordersApi.approveDesign(orderId);
+        await ordersApi.approveDesign(Number(orderId));
       } catch (apiErr) {
         console.warn("Custom approve-design action failed, attempting direct PATCH:", apiErr);
-        await ordersApi.updateOrder(orderId, {
+        await ordersApi.updateOrder(Number(orderId), {
           status: 'DESIGN_APPROVED'
         });
       }
@@ -803,26 +667,15 @@ export const useStore = create<AppState>((set, get) => ({
       }));
     } catch (err: any) {
       console.error("Failed to approve design:", err);
-      // Fallback local update
-      set((state) => ({
-        orders: state.orders.map((o) => 
-          o.id === orderId ? { 
-            ...o, 
-            status: 'DIZAYN_TASDIQLANDI', 
-            isDesignApproved: true, 
-            designApprovedAt: now 
-          } : o
-        ),
-        isLoading: false,
-        error: err.message
-      }));
+      set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
   createSchedule: async (orderId, plannedStartAt, plannedEndAt) => {
     set({ isLoading: true });
     try {
-      await ordersApi.updateOrder(orderId, {
+      await ordersApi.updateOrder(Number(orderId), {
         deadline: plannedEndAt.split('T')[0],
         status: 'CONTRACT_PENDING'
       });
@@ -839,272 +692,108 @@ export const useStore = create<AppState>((set, get) => ({
       }));
     } catch (err: any) {
       console.error("Failed to create schedule:", err);
-      // Fallback local update
-      set((state) => ({
-        orders: state.orders.map((o) => 
-          o.id === orderId ? { 
-            ...o, 
-            status: 'TZ_PLANNER_TUZILDI', 
-            plannedStartAt, 
-            plannedEndAt 
-          } : o
-        ),
-        isLoading: false,
-        error: err.message
-      }));
+      set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
   signContract: async (orderId, totalPrice, advancePayment, paymentMethod) => {
-    const now = new Date().toISOString();
-    const state = get();
-    const orderBOM = state.bomItems.filter(item => item.orderId === orderId);
-    
-    let hasSufficientStock = true;
-    for (const product of state.products) {
-      const bomDemand = orderBOM.find(b => b.productId === product.id);
-      if (bomDemand) {
-        const required = bomDemand.requiredQuantity;
-        if (product.availableQuantity < required) {
-          hasSufficientStock = false;
-          break;
-        }
-      }
-    }
-
-    if (!hasSufficientStock) {
-      return false;
-    }
-
     set({ isLoading: true });
     try {
-      try {
-        await ordersApi.signContract(orderId, {
-          total_price: totalPrice,
-          advance_payment: advancePayment,
-          payment_method: paymentMethod
-        });
-      } catch (apiErr) {
-        console.warn("Custom sign-contract action failed, attempting direct PATCH:", apiErr);
-        await ordersApi.updateOrder(orderId, {
-          total_price: String(totalPrice),
-          advance_payment: String(advancePayment),
-          is_contract_signed: true,
-          signed_at: now,
-          status: 'CONTRACT_SIGNED'
-        });
-        
-        try {
-          const orderNum = state.orders.find(o => o.id === orderId)?.orderNumber || '';
-          const clientName = state.orders.find(o => o.id === orderId)?.customerName || '';
-          await financeApi.addTransaction({
-            type: 'INCOME',
-            category: 'CLIENT_PAYMENT',
-            amount: advancePayment,
-            paymentMethod,
-            description: `Avans to'lovi: ${clientName} (${orderNum})`,
-            orderId: orderId
-          });
-        } catch (fErr) {
-          console.warn("Failed to log finance transaction on API fallback:", fErr);
-        }
-      }
-
-      set((state) => {
-        const updatedOrders = state.orders.map((o) => 
-          o.id === orderId ? { 
-            ...o, 
-            status: 'SHARTNOMA_IMZOLANDI' as OrderStatus, 
-            isContractSigned: true, 
-            contractSignedAt: now,
-            totalPrice,
-            advancePayment,
-            paymentMethod,
-            contractPdfUrl: '#print-layout'
-          } : o
-        );
-
-        const orderNum = state.orders.find(o => o.id === orderId)?.orderNumber || '';
-        const clientName = state.orders.find(o => o.id === orderId)?.customerName || '';
-        const newIncomeTx: FinancialTransaction = {
-          id: 't_' + Math.random().toString(36).substr(2, 9),
-          type: 'INCOME',
-          category: 'CLIENT_PAYMENT',
-          amount: advancePayment,
-          paymentMethod,
-          orderId,
-          description: `Avans to'lovi: ${clientName} (${orderNum})`,
-          createdAt: now
-        };
-
-        const updatedBOM = state.bomItems.map(bom => {
-          if (bom.orderId === orderId) {
-            return { ...bom, allocatedQuantity: bom.requiredQuantity };
-          }
-          return bom;
-        });
-
-        const newStockTxs: StockTransaction[] = [];
-        const updatedProducts = state.products.map(p => {
-          const bom = orderBOM.find(b => b.productId === p.id);
-          if (bom) {
-            newStockTxs.push({
-              id: 'st_' + Math.random().toString(36).substr(2, 9),
-              productId: p.id,
-              quantity: bom.requiredQuantity,
-              unitPrice: p.averagePrice,
-              transactionType: 'CHIQIM',
-              createdAt: now,
-              notes: `Buyurtma zaxirasi: ${orderNum}`
-            });
-            return {
-              ...p,
-              reservedQuantity: p.reservedQuantity + bom.requiredQuantity,
-              availableQuantity: p.quantityInStock - (p.reservedQuantity + bom.requiredQuantity)
-            };
-          }
-          return p;
-        });
-
-        return {
-          orders: updatedOrders,
-          financeTransactions: [newIncomeTx, ...state.financeTransactions],
-          bomItems: updatedBOM,
-          products: updatedProducts,
-          stockTransactions: [...newStockTxs, ...state.stockTransactions],
-          isLoading: false
-        };
+      await ordersApi.signContract(Number(orderId), {
+        total_price: String(totalPrice),
+        advance_payment: String(advancePayment),
+        payment_method: paymentMethod
       });
-
-      get().updateOrderStatus(orderId, 'PRODUCTION');
+      await get().fetchOrders();
       return true;
     } catch (err: any) {
       console.error("Failed to sign contract:", err);
-      // Fallback local update
-      set((state) => {
-        const updatedOrders = state.orders.map((o) => 
-          o.id === orderId ? { 
-            ...o, 
-            status: 'SHARTNOMA_IMZOLANDI' as OrderStatus, 
-            isContractSigned: true, 
-            contractSignedAt: now,
-            totalPrice,
-            advancePayment,
-            paymentMethod,
-            contractPdfUrl: '#print-layout'
-          } : o
-        );
-
-        const orderNum = state.orders.find(o => o.id === orderId)?.orderNumber || '';
-        const clientName = state.orders.find(o => o.id === orderId)?.customerName || '';
-        const newIncomeTx: FinancialTransaction = {
-          id: 't_' + Math.random().toString(36).substr(2, 9),
-          type: 'INCOME',
-          category: 'CLIENT_PAYMENT',
-          amount: advancePayment,
-          paymentMethod,
-          orderId,
-          description: `Avans to'lovi: ${clientName} (${orderNum})`,
-          createdAt: now
-        };
-
-        const updatedBOM = state.bomItems.map(bom => {
-          if (bom.orderId === orderId) {
-            return { ...bom, allocatedQuantity: bom.requiredQuantity };
-          }
-          return bom;
-        });
-
-        const newStockTxs: StockTransaction[] = [];
-        const updatedProducts = state.products.map(p => {
-          const bom = orderBOM.find(b => b.productId === p.id);
-          if (bom) {
-            newStockTxs.push({
-              id: 'st_' + Math.random().toString(36).substr(2, 9),
-              productId: p.id,
-              quantity: bom.requiredQuantity,
-              unitPrice: p.averagePrice,
-              transactionType: 'CHIQIM',
-              createdAt: now,
-              notes: `Buyurtma zaxirasi: ${orderNum}`
-            });
-            return {
-              ...p,
-              reservedQuantity: p.reservedQuantity + bom.requiredQuantity,
-              availableQuantity: p.quantityInStock - (p.reservedQuantity + bom.requiredQuantity)
-            };
-          }
-          return p;
-        });
-
-        return {
-          orders: updatedOrders,
-          financeTransactions: [newIncomeTx, ...state.financeTransactions],
-          bomItems: updatedBOM,
-          products: updatedProducts,
-          stockTransactions: [...newStockTxs, ...state.stockTransactions],
-          isLoading: false,
-          error: err.message
-        };
-      });
-
-      get().updateOrderStatus(orderId, 'PRODUCTION');
-      return true;
+      set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
   // Inventory & BOM / Agent 2 Actions
-  addBOMItem: (orderId, productId, requiredQuantity) => {
-    set((state) => {
-      const product = state.products.find(p => p.id === productId);
-      const newBOM: BOMItem = {
-        id: 'b_' + Math.random().toString(36).substr(2, 9),
-        orderId,
-        productId,
-        requiredQuantity,
-        allocatedQuantity: 0,
-        unitPriceAtReservation: product?.averagePrice || 0
-      };
-      return {
-        bomItems: [...state.bomItems, newBOM]
-      };
-    });
-  },
+  addBOMItem: async (orderId, productId, requiredQuantity) => {
+    try {
+      const serverBOM = await bomApi.createBOM({
+        order: Number(orderId),
+        material: Number(productId),
+        required_qty: String(requiredQuantity)
+      } as any);
 
-  removeBOMItem: (bomItemId) => {
-    set((state) => ({
-      bomItems: state.bomItems.filter(item => item.id !== bomItemId)
-    }));
-  },
-
-  addStockTransaction: (tx) => {
-    const now = new Date().toISOString();
-    const id = 'st_' + Math.random().toString(36).substr(2, 9);
-    
-    set((state) => {
-      const updatedProducts = state.products.map(p => {
-        if (p.id === tx.productId) {
-          const qtyDiff = tx.transactionType === 'KIRIM' ? tx.quantity : -tx.quantity;
-          const newQty = Math.max(0, p.quantityInStock + qtyDiff);
-          return {
-            ...p,
-            quantityInStock: newQty,
-            availableQuantity: newQty - p.reservedQuantity
-          };
-        }
-        return p;
+      set((state) => {
+        const product = state.products.find(p => p.id === productId);
+        const newBOM: BOMItem = {
+          id: String(serverBOM.data.id),
+          orderId,
+          productId,
+          requiredQuantity,
+          allocatedQuantity: serverBOM.data.actual_allocated_qty ? Number(serverBOM.data.actual_allocated_qty) : 0,
+          unitPriceAtReservation: product?.averagePrice || 0
+        };
+        return {
+          bomItems: [...state.bomItems, newBOM]
+        };
       });
+    } catch (err: any) {
+      console.error("Failed to add BOM item to API:", err);
+      throw err;
+    }
+  },
 
-      const newTx: StockTransaction = {
-        ...tx,
-        id,
-        createdAt: now
-      };
+  removeBOMItem: async (bomItemId) => {
+    try {
+      await bomApi.deleteBOM(Number(bomItemId));
+      set((state) => ({
+        bomItems: state.bomItems.filter(item => item.id !== bomItemId)
+      }));
+    } catch (err: any) {
+      console.error("Failed to delete BOM item from API:", err);
+      throw err;
+    }
+  },
 
-      return {
-        products: updatedProducts,
-        stockTransactions: [newTx, ...state.stockTransactions]
-      };
-    });
-  }
+  addStockTransaction: async (tx) => {
+    try {
+      const serverTx = await warehouseTransactionApi.createTransaction({
+        material: Number(tx.productId),
+        transaction_type: tx.transactionType === 'KIRIM' ? 'MATERIAL_BUY' : 'PRODUCTION_USE', // Example mapping
+        quantity: String(tx.quantity),
+        unit_price: String(tx.unitPrice),
+        description: tx.notes || ''
+      } as any);
+
+      set((state) => {
+        const updatedProducts = state.products.map(p => {
+          if (p.id === tx.productId) {
+            const qtyDiff = tx.transactionType === 'KIRIM' ? tx.quantity : -tx.quantity;
+            const newQty = Math.max(0, p.quantityInStock + qtyDiff);
+            return {
+              ...p,
+              quantityInStock: newQty,
+              availableQuantity: newQty - p.reservedQuantity
+            };
+          }
+          return p;
+        });
+
+        const newTx: StockTransaction = {
+          ...tx,
+          id: String(serverTx.data.id),
+          createdAt: serverTx.data.created_at || new Date().toISOString()
+        };
+
+        return {
+          stockTransactions: [newTx, ...state.stockTransactions],
+          products: updatedProducts
+        };
+      });
+    } catch (err: any) {
+      console.error("Failed to add stock transaction to API:", err);
+      throw err;
+    }
+  },
+
 }));

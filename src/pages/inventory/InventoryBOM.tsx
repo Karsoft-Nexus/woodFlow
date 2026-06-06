@@ -66,17 +66,24 @@ export const InventoryBOM: React.FC = () => {
     return matchesCategory && matchesSearch && matchesLowStock;
   });
 
-  const handleStockTxSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleStockTxSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!txForm.productId) return;
 
-    addStockTransaction({
-      productId: txForm.productId,
-      transactionType: txForm.transactionType,
-      quantity: Number(txForm.quantity),
-      unitPrice: Number(txForm.unitPrice),
-      notes: txForm.notes
-    });
+    setIsSubmitting(true);
+    try {
+      await addStockTransaction({
+        productId: txForm.productId,
+        transactionType: txForm.transactionType,
+        quantity: Number(txForm.quantity),
+        unitPrice: Number(txForm.unitPrice),
+        notes: txForm.notes
+      });
+    } catch (error) {
+      alert("Xatolik yuz berdi! API xizmati ulanmagan yoki ma'lumot noto'g'ri.");
+    }
 
     setShowAddTxModal(false);
     setTxForm({
@@ -86,17 +93,24 @@ export const InventoryBOM: React.FC = () => {
       unitPrice: products[0]?.averagePrice || 10000,
       notes: ''
     });
+    setIsSubmitting(false);
   };
 
-  const handleAddBOMItemSubmit = (e: React.FormEvent) => {
+  const handleAddBOMItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBOMOrderId || !newBOMItemForm.productId) return;
 
-    addBOMItem(selectedBOMOrderId, newBOMItemForm.productId, Number(newBOMItemForm.requiredQuantity));
-    setNewBOMItemForm({
-      ...newBOMItemForm,
-      requiredQuantity: 1
-    });
+    setIsSubmitting(true);
+    try {
+      await addBOMItem(selectedBOMOrderId, newBOMItemForm.productId, Number(newBOMItemForm.requiredQuantity));
+      setNewBOMItemForm({
+        ...newBOMItemForm,
+        requiredQuantity: 1
+      });
+    } catch (error) {
+      alert("Xatolik: Retseptga qo'shib bo'lmadi.");
+    }
+    setIsSubmitting(false);
   };
 
   // Get Category label in Karakalpak
@@ -454,9 +468,10 @@ export const InventoryBOM: React.FC = () => {
 
                       <button 
                         type="submit"
-                        className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-1.5"
+                        disabled={isSubmitting}
+                        className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50"
                       >
-                        <Plus className="w-4 h-4" /> Рецептке қосыў
+                        <Plus className="w-4 h-4" /> {isSubmitting ? 'Qo\'shilmoqda...' : 'Рецептке қосыў'}
                       </button>
                     </form>
                   </div>
@@ -505,7 +520,13 @@ export const InventoryBOM: React.FC = () => {
                                 </td>
                                 <td className="px-5 py-4 text-center">
                                   <button 
-                                    onClick={() => removeBOMItem(item.id)}
+                                    onClick={async () => {
+                                      try {
+                                        await removeBOMItem(item.id);
+                                      } catch (e) {
+                                        alert("O'chirishda xatolik yuz berdi");
+                                      }
+                                    }}
                                     className="p-1 text-rose-500 hover:bg-rose-500/10 rounded transition"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -626,9 +647,10 @@ export const InventoryBOM: React.FC = () => {
                 </button>
                 <button 
                   type="submit"
-                  className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark text-xs font-black px-5 py-2 rounded-xl transition"
+                  disabled={isSubmitting}
+                  className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark text-xs font-black px-5 py-2 rounded-xl transition disabled:opacity-50"
                 >
-                  Әмелге асырыў
+                  {isSubmitting ? 'Bajarilmoqda...' : 'Әмелге асырыў'}
                 </button>
               </div>
             </form>

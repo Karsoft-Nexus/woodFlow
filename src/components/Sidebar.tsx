@@ -8,7 +8,8 @@ import {
   Hammer,
   Users,
   Package,
-  LogOut
+  LogOut,
+  UserCog
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
@@ -20,7 +21,8 @@ export const Sidebar: React.FC = () => {
     { to: '/', label: 'Kanban Board', icon: <Columns className="w-4 h-4" /> },
     { to: '/dashboard', label: 'Manager Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { to: '/tablet', label: 'Worker Tablet', icon: <Smartphone className="w-4 h-4" /> },
-    { to: '/finance', label: 'Finance Ledger', icon: <Wallet className="w-4 h-4" /> }
+    { to: '/finance', label: 'Finance Ledger', icon: <Wallet className="w-4 h-4" /> },
+    { to: '/admin/users', label: 'Xodimlar & Maosh', icon: <UserCog className="w-4 h-4" /> }
   ];
 
   return (

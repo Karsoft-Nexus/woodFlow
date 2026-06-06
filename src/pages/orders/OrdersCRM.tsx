@@ -29,12 +29,12 @@ export const OrdersCRM: React.FC = () => {
     approveDesign, 
     createSchedule, 
     signContract,
-    fetchInitialData
+    fetchOrders
   } = useStore();
 
   useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
+    fetchOrders();
+  }, [fetchOrders]);
 
   const [selectedOrderId, setSelectedOrderId] = useState<string>(orders[0]?.id || '');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
@@ -94,65 +94,101 @@ export const OrdersCRM: React.FC = () => {
     return true;
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleAddLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!leadForm.customerName || !leadForm.customerPhone) return;
 
-    await addOrder({
-      customerName: leadForm.customerName,
-      customerPhone: leadForm.customerPhone,
-      source: leadForm.source,
-      totalPrice: Number(leadForm.totalPrice),
-      advancePayment: 0
-    });
-
-
-    setLeadForm({ customerName: '', customerPhone: '', source: 'TELEGRAM', totalPrice: 15000000 });
-    setShowAddLead(false);
+    setIsSubmitting(true);
+    try {
+      await addOrder({
+        customerName: leadForm.customerName,
+        customerPhone: leadForm.customerPhone,
+        source: leadForm.source,
+        totalPrice: Number(leadForm.totalPrice),
+        advancePayment: 0
+      });
+      setLeadForm({ customerName: '', customerPhone: '', source: 'TELEGRAM', totalPrice: 15000000 });
+      setShowAddLead(false);
+    } catch (error) {
+      alert("Xatolik: Buyurtma qo'shilmadi.");
+    }
+    setIsSubmitting(false);
   };
 
   const handleAssignZamer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrderId || !zamerForm.workerId || !zamerForm.scheduledAt) return;
-    await assignZamerchik(selectedOrderId, zamerForm.workerId, zamerForm.scheduledAt);
+    setIsSubmitting(true);
+    try {
+      await assignZamerchik(selectedOrderId, zamerForm.workerId, zamerForm.scheduledAt);
+    } catch (error) {
+      alert("Xatolik: O'lchovchini biriktirishda muammo.");
+    }
+    setIsSubmitting(false);
   };
 
   const handleUploadZamer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrderId) return;
-    await uploadZamerDetails(selectedOrderId, zamerDetailsForm);
+    setIsSubmitting(true);
+    try {
+      await uploadZamerDetails(selectedOrderId, zamerDetailsForm);
+    } catch (error) {
+      alert("Xatolik: O'lchov tafsilotlari yuklanmadi.");
+    }
+    setIsSubmitting(false);
   };
 
   const handleUploadDesign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrderId) return;
-    const url = designUrlInput || 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=800&q=80';
-    await upload3DDesign(selectedOrderId, url);
-    setDesignUrlInput('');
+    setIsSubmitting(true);
+    try {
+      const url = designUrlInput || 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=800&q=80';
+      await upload3DDesign(selectedOrderId, url);
+      setDesignUrlInput('');
+    } catch (error) {
+      alert("Xatolik: Dizayn yuklanmadi.");
+    }
+    setIsSubmitting(false);
   };
 
   const handleCreateScheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrderId) return;
-    await createSchedule(
-      selectedOrderId, 
-      new Date(scheduleForm.startDate).toISOString(), 
-      new Date(scheduleForm.endDate).toISOString()
-    );
+    setIsSubmitting(true);
+    try {
+      await createSchedule(
+        selectedOrderId, 
+        new Date(scheduleForm.startDate).toISOString(), 
+        new Date(scheduleForm.endDate).toISOString()
+      );
+    } catch (error) {
+      alert("Xatolik: Reja tasdiqlanmadi.");
+    }
+    setIsSubmitting(false);
   };
 
   const handleSignContractSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrderId) return;
-    const success = await signContract(
-      selectedOrderId,
-      Number(contractForm.totalPrice),
-      Number(contractForm.advancePayment),
-      contractForm.paymentMethod
-    );
-    if (!success) {
-      alert("Омборда жетерли шийки зат жоқ! Алдын омбор қалдықларын тексериң яки товар кирис етиң.");
+    setIsSubmitting(true);
+    try {
+      const success = await signContract(
+        selectedOrderId,
+        Number(contractForm.totalPrice),
+        Number(contractForm.advancePayment),
+        contractForm.paymentMethod
+      );
+      if (!success) {
+        alert("Омборда жетерли шийки зат жоқ! Алдын омбор қалдықларын тексериң яки товар кирис етиң.");
+      }
+    } catch (error) {
+      alert("Xatolik: Shartnoma imzolanmadi.");
     }
+    setIsSubmitting(false);
   };
 
   // Helper render status badges
@@ -418,9 +454,10 @@ export const OrdersCRM: React.FC = () => {
 
                     <button 
                       type="submit"
-                      className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
+                      disabled={isSubmitting}
+                      className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      Өлшеўшини бириктириў <ArrowRight className="w-4 h-4" />
+                      {isSubmitting ? 'Bajarilmoqda...' : <><ArrowRight className="w-4 h-4" /> Өлшеўшини бириктириў</>}
                     </button>
                   </form>
                 )}
@@ -507,9 +544,10 @@ export const OrdersCRM: React.FC = () => {
 
                     <button 
                       type="submit"
-                      className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
+                      disabled={isSubmitting}
+                      className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      Өлшеў мағлыўматларын жүклеў <ArrowRight className="w-4 h-4" />
+                      {isSubmitting ? 'Bajarilmoqda...' : <><ArrowRight className="w-4 h-4" /> Өлшеў мағлыўматларын жүклеў</>}
                     </button>
                   </form>
                 )}
@@ -535,9 +573,10 @@ export const OrdersCRM: React.FC = () => {
 
                       <button 
                         type="submit"
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
+                        disabled={isSubmitting}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
                       >
-                        3D Дизайн Рендерин Жүклеў
+                        {isSubmitting ? 'Bajarilmoqda...' : '3D Дизайн Рендерин Жүклеў'}
                       </button>
                     </form>
 
@@ -585,9 +624,10 @@ export const OrdersCRM: React.FC = () => {
 
                     <button 
                       type="submit"
-                      className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
+                      disabled={isSubmitting}
+                      className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      ТТ Режени Тастыйықлаў <ArrowRight className="w-4 h-4" />
+                      {isSubmitting ? 'Bajarilmoqda...' : <><ArrowRight className="w-4 h-4" /> ТТ Режени Тастыйықлаў</>}
                     </button>
                   </form>
                 )}
@@ -642,9 +682,10 @@ export const OrdersCRM: React.FC = () => {
                       </button>
                       <button 
                         type="submit"
-                        className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
+                        disabled={isSubmitting}
+                        className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50"
                       >
-                        Қол қойыў ҳәм аванс қабыл етиў
+                        {isSubmitting ? 'Bajarilmoqda...' : 'Қол қойыў ҳәм аванс қабыл етиў'}
                       </button>
                     </div>
                   </form>
@@ -845,9 +886,10 @@ export const OrdersCRM: React.FC = () => {
                 </button>
                 <button 
                   type="submit"
-                  className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark text-xs font-black px-5 py-2 rounded-xl transition"
+                  disabled={isSubmitting}
+                  className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark text-xs font-black px-5 py-2 rounded-xl transition disabled:opacity-50"
                 >
-                  Лид жаратыў
+                  {isSubmitting ? 'Qo\'shilmoqda...' : 'Қосыў'}
                 </button>
               </div>
             </form>

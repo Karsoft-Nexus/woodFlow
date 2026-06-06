@@ -6,6 +6,7 @@ import { WorkerTablet } from './pages/worker/WorkerTablet';
 import { FinanceLedger } from './pages/finance/FinanceLedger';
 import { OrdersCRM } from './pages/orders/OrdersCRM';
 import { InventoryBOM } from './pages/inventory/InventoryBOM';
+import { UsersAdmin } from './pages/admin/UsersAdmin';
 import { Login } from './components/Login';
 import { useStore } from './store/useStore';
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/dashboard" element={<ManagerDashboard />} />
             <Route path="/tablet" element={<WorkerTablet />} />
             <Route path="/finance" element={<FinanceLedger />} />
+            <Route path="/admin/users" element={<UsersAdmin />} />
           </Routes>
         </main>
       </div>

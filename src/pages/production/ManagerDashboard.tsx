@@ -19,12 +19,12 @@ export const ManagerDashboard: React.FC = () => {
     productionStages, 
     updateWorkerDailyStatus,
     assignWorkerToStage,
-    fetchInitialData,
+    fetchProductionBoard,
     isLoading
   } = useStore();
 
   useEffect(() => {
-    fetchInitialData();
+    fetchProductionBoard();
   }, []);
 
   const activeOrders = orders.filter(o => o.status === 'PRODUCTION');
