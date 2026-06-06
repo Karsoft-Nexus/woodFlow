@@ -130,7 +130,7 @@ export const FinanceLedger: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Transaction History Table */}
-            <div className="lg:col-span-2 bg-brand-surface/65 backdrop-blur-md border border-brand-border/80 rounded-2xl p-6 shadow-xl">
+            <div className={`bg-brand-surface/65 backdrop-blur-md border border-brand-border/80 rounded-2xl p-6 shadow-xl transition-all duration-300 ${isAddOpen ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
               <h2 className="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-brand-emerald" />
                 Tranzaksiyalar Tarixi
@@ -192,7 +192,7 @@ export const FinanceLedger: React.FC = () => {
             </div>
 
             {/* Add Transaction Dialog/Form */}
-            <div className={`bg-brand-surface/65 backdrop-blur-md border border-brand-border/80 rounded-2xl p-6 shadow-xl ${isAddOpen ? 'block' : 'hidden lg:block'}`}>
+            <div className={`bg-brand-surface/65 backdrop-blur-md border border-brand-border/80 rounded-2xl p-6 shadow-xl ${isAddOpen ? 'block' : 'hidden'}`}>
               <h2 className="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-brand-emerald" />
                 Yangi Tranzaksiya Qo'shish

@@ -385,14 +385,17 @@ export const useStore = create<AppState>((set, get) => ({
 
   addFinancialTransaction: async (tx) => {
     const now = new Date().toISOString();
+    // API'siz lokal ishlashi uchun API qo'ng'irog'i olib tashlandi:
+    /*
     let serverTx: FinancialTransaction | null = null;
     try {
       serverTx = await financeApi.addTransaction(tx);
     } catch (err) {
       console.warn("API addTransaction failed, falling back to local store update:", err);
     }
+    */
 
-    const newTx: FinancialTransaction = serverTx || {
+    const newTx: FinancialTransaction = {
       ...tx,
       id: 't_' + Math.random().toString(36).substr(2, 9),
       createdAt: now,
