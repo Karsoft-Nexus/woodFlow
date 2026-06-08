@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useStore } from '../../store/useStore';
+import { useTranslation } from 'react-i18next';
 import type { OrderStatus, Order } from '../../types';
 import { 
   MessageSquare, 
@@ -32,20 +33,23 @@ const InstagramIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-const columns: { status: OrderStatus; label: string; color: string }[] = [
-  { status: 'YANGI_LID', label: 'Yangi Lid', color: 'border-t-blue-500 bg-blue-950/10' },
-  { status: 'ZAMER_BELGILANDI', label: "O'lchov Belgilandi", color: 'border-t-indigo-500 bg-indigo-950/10' },
-  { status: 'ZAMER_BAJARILDI', label: "O'lchov Yuklandi", color: 'border-t-violet-500 bg-violet-950/10' },
-  { status: 'DIZAYN_LOYYAHALASHDA', label: '3D Loyihalashda', color: 'border-t-purple-500 bg-purple-950/10' },
-  { status: 'DIZAYN_TASDIQLANDI', label: 'Dizayn Tasdiqlandi', color: 'border-t-pink-500 bg-pink-950/10' },
-  { status: 'TZ_PLANNER_TUZILDI', label: 'Kichik TZ Tuzildi', color: 'border-t-cyan-500 bg-cyan-950/10' },
-  { status: 'SHARTNOMA_IMZOLANDI', label: 'Shartnoma Imzolandi', color: 'border-t-teal-500 bg-teal-950/10' },
-  { status: 'PRODUCTION', label: 'Ishlab Chiqarishda', color: 'border-t-emerald-500 bg-emerald-950/10' },
-  { status: 'TAYYOR_OTK', label: 'Tayyor (OTK)', color: 'border-t-amber-500 bg-amber-950/10' },
-  { status: 'YOPILDI_USTANOVKA', label: 'O\'rnatildi (Yopildi)', color: 'border-t-slate-500 bg-slate-900/40' }
-];
+
 
 export const KanbanBoard: React.FC = () => {
+  const { t } = useTranslation();
+  
+  const columns: { status: OrderStatus; label: string; color: string }[] = [
+    { status: 'YANGI_LID', label: t('kanban.col_yangi_lid'), color: 'border-t-blue-500 bg-blue-950/10' },
+    { status: 'ZAMER_BELGILANDI', label: t('kanban.col_zamer_belgilandi'), color: 'border-t-indigo-500 bg-indigo-950/10' },
+    { status: 'ZAMER_BAJARILDI', label: t('kanban.col_zamer_bajarildi'), color: 'border-t-violet-500 bg-violet-950/10' },
+    { status: 'DIZAYN_LOYYAHALASHDA', label: t('kanban.col_dizayn_loyyahalashda'), color: 'border-t-purple-500 bg-purple-950/10' },
+    { status: 'DIZAYN_TASDIQLANDI', label: t('kanban.col_dizayn_tasdiqlandi'), color: 'border-t-pink-500 bg-pink-950/10' },
+    { status: 'TZ_PLANNER_TUZILDI', label: t('kanban.col_tz_tuzildi'), color: 'border-t-cyan-500 bg-cyan-950/10' },
+    { status: 'SHARTNOMA_IMZOLANDI', label: t('kanban.col_shartnoma_imzolandi'), color: 'border-t-teal-500 bg-teal-950/10' },
+    { status: 'PRODUCTION', label: t('kanban.col_production'), color: 'border-t-emerald-500 bg-emerald-950/10' },
+    { status: 'TAYYOR_OTK', label: t('kanban.col_tayyor'), color: 'border-t-amber-500 bg-amber-950/10' },
+    { status: 'YOPILDI_USTANOVKA', label: t('kanban.col_yopildi'), color: 'border-t-slate-500 bg-slate-900/40' }
+  ];
   const { orders, productionStages, updateOrderStatus, fetchInitialData, isLoading } = useStore();
 
   useEffect(() => {
@@ -109,10 +113,10 @@ export const KanbanBoard: React.FC = () => {
       const diffMs = now.getTime() - plannedEnd.getTime();
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       if (diffHours < 24) {
-        return `${diffHours} soat kechikdi`;
+        return `${diffHours} ${t('kanban.hours_late')}`;
       }
       const diffDays = Math.floor(diffHours / 24);
-      return `${diffDays} kun kechikdi`;
+      return `${diffDays} ${t('kanban.days_late')}`;
     }
     return '';
   };
@@ -120,10 +124,10 @@ export const KanbanBoard: React.FC = () => {
   const getActiveStage = (orderId: string) => {
     const stages = productionStages.filter(s => s.orderId === orderId);
     const active = stages.find(s => s.status === 'IN_PROGRESS');
-    if (active) return `${active.stageName} (Bajarilmoqda)`;
+    if (active) return `${active.stageName} ${t('kanban.in_progress')}`;
     const pending = stages.find(s => s.status === 'PENDING');
-    if (pending) return `${pending.stageName} (Kutilmoqda)`;
-    return 'Bosqichlar yo\'q';
+    if (pending) return `${pending.stageName} ${t('kanban.pending')}`;
+    return t('kanban.no_stages');
   };
 
   const handleNextStatus = (order: Order) => {
@@ -152,22 +156,22 @@ export const KanbanBoard: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-300">
-            Ishlab Chiqarish Kanban Doskasi
+            {t('kanban.title')}
           </h1>
           <p className="text-slate-400 mt-1 text-sm">
-            Buyurtmalar va lidxonlik quvuri (CRM-dan yopilgungacha bo'lgan barcha bosqichlar)
+            {t('kanban.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3 bg-brand-surface/40 backdrop-blur-md border border-brand-border/60 px-4 py-2.5 rounded-xl text-xs text-slate-300 shadow-lg">
           <ArrowRightLeft className="w-4 h-4 text-brand-emerald animate-pulse" />
-          <span>Statuslarni o'tkazish uchun kartalardagi <strong>"Keyingi"</strong> tugmasini bosing</span>
+          <span>{t('kanban.instruction_prefix')} <strong>{t('kanban.instruction_bold')}</strong> {t('kanban.instruction_suffix')}</span>
         </div>
       </div>
 
       {isLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-10 h-10 text-brand-emerald animate-spin" />
-          <span className="text-sm font-semibold text-slate-400">Ma'lumotlar yuklanmoqda...</span>
+          <span className="text-sm font-semibold text-slate-400">{t('kanban.loading')}</span>
         </div>
       ) : (
         /* Columns Container */
@@ -192,7 +196,7 @@ export const KanbanBoard: React.FC = () => {
                 <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent">
                   {columnOrders.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center border border-dashed border-slate-800/80 rounded-xl p-6 text-slate-600 text-xs font-semibold">
-                      Buyurtmalar mavjud emas
+                      {t('kanban.no_orders')}
                     </div>
                   ) : (
                     columnOrders.map(order => {
@@ -237,7 +241,7 @@ export const KanbanBoard: React.FC = () => {
                               <div className={`mb-3 px-2.5 py-2 rounded-lg border text-xs flex flex-col gap-1 ${
                                 late ? 'bg-rose-950/20 border-rose-500/30' : 'bg-brand-dark/50 border-brand-border/60'
                               }`}>
-                                <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Hozirgi etapi:</span>
+                                <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">{t('kanban.current_stage')}</span>
                                 <span className={`font-bold ${late ? 'text-rose-400' : 'text-slate-300'} flex items-center gap-1.5`}>
                                   {late && <AlertTriangle className="w-3.5 h-3.5 text-rose-500 animate-pulse" />}
                                   {getActiveStage(order.id)}
@@ -256,7 +260,7 @@ export const KanbanBoard: React.FC = () => {
                             {order.plannedEndAt && (
                               <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mb-3 font-semibold">
                                 <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                                <span>Dedlayn: {new Date(order.plannedEndAt).toLocaleDateString()}</span>
+                                <span>{t('kanban.deadline')} {new Date(order.plannedEndAt).toLocaleDateString()}</span>
                               </div>
                             )}
                           </div>
@@ -265,7 +269,7 @@ export const KanbanBoard: React.FC = () => {
                           <div className="mt-2 pt-3 border-t border-brand-border/50 flex items-center justify-between">
                             <div className="flex items-center text-slate-200 font-bold text-xs">
                               <DollarSign className="w-3.5 h-3.5 text-slate-500" />
-                              <span>{(order.totalPrice / 1000000).toFixed(1)} mln UZS</span>
+                              <span>{(order.totalPrice / 1000000).toFixed(1)} {t('kanban.mln_uzs')}</span>
                             </div>
 
                             {order.status !== 'YOPILDI_USTANOVKA' && (
@@ -273,7 +277,7 @@ export const KanbanBoard: React.FC = () => {
                                 onClick={() => handleNextStatus(order)}
                                 className="flex items-center gap-1 bg-brand-border/80 hover:bg-brand-emerald hover:text-brand-dark text-slate-300 hover:scale-[1.03] text-[10px] font-extrabold py-1.5 px-3 rounded-lg border border-transparent hover:border-brand-emerald/30 transition-all duration-300 cursor-pointer shadow-sm shadow-black/10"
                               >
-                                <span>Keyingi</span>
+                                <span>{t('kanban.next')}</span>
                                 <ChevronRight className="w-3.5 h-3.5" />
                               </button>
                             )}
@@ -281,7 +285,7 @@ export const KanbanBoard: React.FC = () => {
                             {order.status === 'YOPILDI_USTANOVKA' && (
                               <div className="flex items-center gap-1 text-brand-emerald text-[10px] font-extrabold bg-brand-emerald/10 border border-brand-emerald/20 px-2 py-0.5 rounded-lg shadow-sm">
                                 <CheckCircle className="w-3.5 h-3.5" />
-                                <span>Yopildi</span>
+                                <span>{t('kanban.closed')}</span>
                               </div>
                             )}
                           </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../../store/useStore';
 import { 
   Users, 
@@ -19,6 +20,7 @@ import type { LeadSource, OrderStatus } from '../../types';
 
 
 export const OrdersCRM: React.FC = () => {
+  const { t } = useTranslation();
   const { 
     orders, 
     workers, 
@@ -146,23 +148,23 @@ export const OrdersCRM: React.FC = () => {
       contractForm.paymentMethod
     );
     if (!success) {
-      alert("Omborda yetarli xomashyo mavjud emas! Avval ombor qoldiqlarini tekshiring yoki tovar kirim qiling.");
+      alert(t('orders.alert_no_materials'));
     }
   };
 
   // Helper render status badges
   const getStatusBadge = (status: OrderStatus) => {
     const configs: Record<OrderStatus, { bg: string, label: string }> = {
-      YANGI_LID: { bg: 'bg-blue-500/10 border-blue-500/20 text-blue-400', label: 'Yangi Lid' },
-      ZAMER_BELGILANDI: { bg: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400', label: 'O\'lchovchi Biriktirildi' },
-      ZAMER_BAJARILDI: { bg: 'bg-orange-500/10 border-orange-500/20 text-orange-400', label: 'O\'lchov Bajarildi' },
-      DIZAYN_LOYYAHALASHDA: { bg: 'bg-purple-500/10 border-purple-500/20 text-purple-400', label: '3D Dizaynda' },
-      DIZAYN_TASDIQLANDI: { bg: 'bg-pink-500/10 border-pink-500/20 text-pink-400', label: 'Dizayn Tasdiqlandi' },
-      TZ_PLANNER_TUZILDI: { bg: 'bg-teal-500/10 border-teal-500/20 text-teal-400', label: 'Reja/TZ Tuzildi' },
-      SHARTNOMA_IMZOLANDI: { bg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400', label: 'Shartnoma Imzolandi' },
-      PRODUCTION: { bg: 'bg-emerald-500/10 border-emerald-500/20 text-brand-emerald', label: 'Ishlab Chiqarishda' },
-      TAYYOR_OTK: { bg: 'bg-green-500/10 border-green-500/20 text-green-400', label: 'Tayyor (OTK)' },
-      YOPILDI_USTANOVKA: { bg: 'bg-slate-500/10 border-slate-500/20 text-slate-400', label: 'O\'rnatildi (Yopildi)' }
+      YANGI_LID: { bg: 'bg-blue-500/10 border-blue-500/20 text-blue-400', label: t('orders.new_lead') },
+      ZAMER_BELGILANDI: { bg: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400', label: t('orders.status_zamer_assigned') },
+      ZAMER_BAJARILDI: { bg: 'bg-orange-500/10 border-orange-500/20 text-orange-400', label: t('orders.status_zamer_done') },
+      DIZAYN_LOYYAHALASHDA: { bg: 'bg-purple-500/10 border-purple-500/20 text-purple-400', label: t('orders.status_3d') },
+      DIZAYN_TASDIQLANDI: { bg: 'bg-pink-500/10 border-pink-500/20 text-pink-400', label: t('orders.status_design_approved') },
+      TZ_PLANNER_TUZILDI: { bg: 'bg-teal-500/10 border-teal-500/20 text-teal-400', label: t('orders.status_tz_done') },
+      SHARTNOMA_IMZOLANDI: { bg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400', label: t('orders.status_contract_signed') },
+      PRODUCTION: { bg: 'bg-emerald-500/10 border-emerald-500/20 text-brand-emerald', label: t('orders.status_production') },
+      TAYYOR_OTK: { bg: 'bg-green-500/10 border-green-500/20 text-green-400', label: t('orders.status_ready') },
+      YOPILDI_USTANOVKA: { bg: 'bg-slate-500/10 border-slate-500/20 text-slate-400', label: t('orders.status_closed') }
     };
     const c = configs[status] || configs.YANGI_LID;
     return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${c.bg}`}>{c.label}</span>;
@@ -184,50 +186,50 @@ export const OrdersCRM: React.FC = () => {
     if (!printDiv) return;
 
     const todayStr = new Date().toLocaleDateString('uz-UZ');
-    const deadlineStr = selectedOrder.plannedEndAt ? new Date(selectedOrder.plannedEndAt).toLocaleDateString('uz-UZ') : 'Kelishilgan muddat';
+    const deadlineStr = selectedOrder.plannedEndAt ? new Date(selectedOrder.plannedEndAt).toLocaleDateString('uz-UZ') : t('orders.agreed_deadline');
     const advancePercent = selectedOrder.totalPrice > 0 ? Math.round((selectedOrder.advancePayment / selectedOrder.totalPrice) * 100) : 30;
 
     printDiv.innerHTML = `
       <div style="font-family: serif; color: black; background: white; padding: 40px; max-width: 800px; margin: auto;">
-        <h2 style="text-align: center; text-transform: uppercase; margin-bottom: 20px;">MEBEL ISHLAB CHIQARISH VA YETKAZIB BERISH SHARTNOMASI</h2>
-        <p style="text-align: center; font-weight: bold; margin-bottom: 30px;">Shartnoma Raqami: ${selectedOrder.orderNumber}</p>
+        <h2 style="text-align: center; text-transform: uppercase; margin-bottom: 20px;">${t('orders.contract_title')}</h2>
+        <p style="text-align: center; font-weight: bold; margin-bottom: 30px;">${t('orders.contract_number')} ${selectedOrder.orderNumber}</p>
         
         <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-          <span>Toshkent shahri</span>
-          <span>Sana: ${todayStr} yil</span>
+          <span>${t('orders.city')}</span>
+          <span>${t('orders.date')} ${todayStr} ${t('orders.year')}</span>
         </div>
 
-        <p><strong>1. SHARTNOMA TOMONLARI</strong></p>
-        <p>Ushbu shartnoma Mebel ishlab chiqarish sexi nomidan "WOODFLOW" MChJ (keyingi o'rinlarda "Ijrochi" deb ataladi) va mijoz <strong>${selectedOrder.customerName}</strong> (keyingi o'rinlarda "Buyurtmachi" deb ataladi) o'rtasida O'zbekiston Respublikasi Fuqarolik Kodeksi talablariga muvofiq quyidagi shartlar asosida tuzildi.</p>
+        <p><strong>${t('orders.parties_title')}</strong></p>
+        <p>${t('orders.parties_desc', { customerName: selectedOrder.customerName })}</p>
 
-        <p><strong>2. SHARTNOMA MAQSADI</strong></p>
-        <p>2.1. Ijrochi Buyurtmachi tomonidan taqdim etilgan 3D loyiha chizmalari va kichik Texnik Topshiriq (Mini-TZ) asosida mebel to'plamini sifatli tayyorlab berish va o'rnatish majburiyatini oladi.</p>
-        <p>2.2. Xona o'lchamlari: Uzunligi: ${selectedOrder.dimensions?.length || 3.0} m, Kengligi: ${selectedOrder.dimensions?.width || 2.5} m, Shift balandligi: ${selectedOrder.dimensions?.height || 2.7} m.</p>
+        <p><strong>${t('orders.subject_title')}</strong></p>
+        <p>${t('orders.subject_desc1')}</p>
+        <p>${t('orders.subject_desc2', { length: selectedOrder.dimensions?.length || 3.0, width: selectedOrder.dimensions?.width || 2.5, height: selectedOrder.dimensions?.height || 2.7 })}</p>
 
-        <p><strong>3. SHARTNOMA SUMMASI VA TO'LOV TARTIBI</strong></p>
-        <p>3.1. Shartnomaning umumiy summasi <strong>${selectedOrder.totalPrice.toLocaleString()} UZS</strong> etib belgilandi.</p>
-        <p>3.2. Buyurtmachi shartnoma imzolangan paytda jami summaning ${advancePercent}% foizi, ya'ni <strong>${selectedOrder.advancePayment.toLocaleString()} UZS</strong> miqdorida avans to'lovini amalga oshiradi.</p>
-        <p>3.3. Qolgan to'lov (kutilayotgan qoldiq <strong>${(selectedOrder.totalPrice - selectedOrder.advancePayment).toLocaleString()} UZS</strong>) mebel o'rnatilib, sifat tekshiruvi (OTK) topshirilganidan so'ng 3 bank kuni ichida to'lanadi.</p>
+        <p><strong>${t('orders.payment_title')}</strong></p>
+        <p>${t('orders.payment_desc1', { totalPrice: selectedOrder.totalPrice.toLocaleString() })}</p>
+        <p>${t('orders.payment_desc2', { advancePercent, advancePayment: selectedOrder.advancePayment.toLocaleString() })}</p>
+        <p>${t('orders.payment_desc3', { remaining: (selectedOrder.totalPrice - selectedOrder.advancePayment).toLocaleString() })}</p>
 
-        <p><strong>4. MUDDAT VA KECHIKISH JARIYASI (PENYA)</strong></p>
-        <p>4.1. Ijrochi mebel mahsulotlarini <strong>${deadlineStr}</strong> muddatgacha tayyorlashi va o'rnatib berishi shart.</p>
-        <p>4.2. Agarda Ijrochi o'z majburiyatlarini vaqtida bajarmasa, har bir kechiktirilgan kun uchun jami shartnoma summasining 0.1% foizi miqdorida penya to'laydi. Ammo penyani umumiy summasi shartnoma narxining 10% idan oshib ketmasligi lozim.</p>
+        <p><strong>${t('orders.penalty_title')}</strong></p>
+        <p>${t('orders.penalty_desc1', { deadline: deadlineStr })}</p>
+        <p>${t('orders.penalty_desc2')}</p>
 
-        <p><strong>5. KAFOLAT SHARTLARI</strong></p>
-        <p>5.1. Ijrochi topshirilgan mebellar uchun <strong>12 oy</strong> muddatga kafolat beradi.</p>
+        <p><strong>${t('orders.warranty_title')}</strong></p>
+        <p>${t('orders.warranty_desc1')}</p>
 
         <br/><br/>
         <div style="display: flex; justify-content: space-between; margin-top: 50px;">
           <div style="width: 45%;">
-            <p><strong>IJROCHI:</strong></p>
-            <p>"WOODFLOW" MChJ Mebel Sexi</p>
-            <p>Imzo: _____________________</p>
+            <p><strong>${t('orders.contractor')}</strong></p>
+            <p>${t('orders.company_name')}</p>
+            <p>${t('orders.signature')} _____________________</p>
           </div>
           <div style="width: 45%;">
-            <p><strong>BUYURTMACHI:</strong></p>
+            <p><strong>${t('orders.customer')}</strong></p>
             <p>${selectedOrder.customerName}</p>
-            <p>Telefon: ${selectedOrder.customerPhone}</p>
-            <p>Imzo: _____________________</p>
+            <p>${t('orders.phone_label')} ${selectedOrder.customerPhone}</p>
+            <p>${t('orders.signature')} _____________________</p>
           </div>
         </div>
       </div>
@@ -250,7 +252,7 @@ export const OrdersCRM: React.FC = () => {
         <div className="p-4 border-b border-brand-border space-y-3">
           <div className="flex justify-between items-center">
             <h1 className="text-lg font-extrabold text-slate-100 flex items-center gap-2">
-              <Users className="w-5 h-5 text-brand-emerald" /> CRM & Buyurtmalar
+              <Users className="w-5 h-5 text-brand-emerald" /> {t('orders.title')}
             </h1>
             <button 
               onClick={() => setShowAddLead(true)}
@@ -265,12 +267,12 @@ export const OrdersCRM: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="w-full bg-brand-dark border border-brand-border rounded-lg px-3 py-2 text-xs font-semibold text-slate-300 focus:outline-none focus:border-brand-emerald"
           >
-            <option value="ALL">Barcha holatlar</option>
-            <option value="YANGI_LID">Yangi Lidlar</option>
-            <option value="ZAMER">O'lchov Bosqichi</option>
-            <option value="DIZAYN">Dizayn Bosqichi</option>
-            <option value="TZ_SHARTNOMA">TZ va Shartnomalar</option>
-            <option value="PRODUCTION">Ishlab Chiqarishdagilar</option>
+            <option value="ALL">{t('orders.all_statuses')}</option>
+            <option value="YANGI_LID">{t('orders.new_leads')}</option>
+            <option value="ZAMER">{t('orders.measurement_stage')}</option>
+            <option value="DIZAYN">{t('orders.design_stage')}</option>
+            <option value="TZ_SHARTNOMA">{t('orders.tz_contracts')}</option>
+            <option value="PRODUCTION">{t('orders.in_production')}</option>
           </select>
         </div>
 
@@ -278,7 +280,7 @@ export const OrdersCRM: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
           {filteredOrders.length === 0 ? (
             <div className="text-center py-10 text-xs text-slate-500 font-medium">
-              Buyurtmalar topilmadi.
+              {t('orders.no_orders')}
             </div>
           ) : (
             filteredOrders.map(order => (
@@ -336,7 +338,7 @@ export const OrdersCRM: React.FC = () => {
               </div>
 
               <div className="text-right">
-                <span className="text-[11px] text-slate-500 font-bold block mb-1">Murojaat Manbasi</span>
+                <span className="text-[11px] text-slate-500 font-bold block mb-1">{t('orders.source')}</span>
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-brand-border rounded-xl text-xs font-extrabold text-slate-300">
                   {getSourceIcon(selectedOrder.source)}
                   {selectedOrder.source}
@@ -346,14 +348,14 @@ export const OrdersCRM: React.FC = () => {
 
             {/* Steps Visual Tracker */}
             <div className="bg-brand-surface border border-brand-border p-5 rounded-2xl">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Lidxonlik Bosqichlari</h3>
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">{t('orders.lead_stages')}</h3>
               <div className="grid grid-cols-5 gap-2">
                 {[
-                  { label: 'Yangi Lid', active: true },
-                  { label: 'O\'lchov (Zamer)', active: ['ZAMER_BELGILANDI', 'ZAMER_BAJARILDI', 'DIZAYN_LOYYAHALASHDA', 'DIZAYN_TASDIQLANDI', 'TZ_PLANNER_TUZILDI', 'SHARTNOMA_IMZOLANDI', 'PRODUCTION', 'TAYYOR_OTK', 'YOPILDI_USTANOVKA'].includes(selectedOrder.status) },
-                  { label: '3D Dizayn', active: ['DIZAYN_LOYYAHALASHDA', 'DIZAYN_TASDIQLANDI', 'TZ_PLANNER_TUZILDI', 'SHARTNOMA_IMZOLANDI', 'PRODUCTION', 'TAYYOR_OTK', 'YOPILDI_USTANOVKA'].includes(selectedOrder.status) },
-                  { label: 'TZ & Rejalashtirish', active: ['TZ_PLANNER_TUZILDI', 'SHARTNOMA_IMZOLANDI', 'PRODUCTION', 'TAYYOR_OTK', 'YOPILDI_USTANOVKA'].includes(selectedOrder.status) },
-                  { label: 'Shartnoma & Ishlab Chiqarish', active: ['SHARTNOMA_IMZOLANDI', 'PRODUCTION', 'TAYYOR_OTK', 'YOPILDI_USTANOVKA'].includes(selectedOrder.status) }
+                  { label: t('orders.new_lead'), active: true },
+                  { label: t('orders.measurement'), active: ['ZAMER_BELGILANDI', 'ZAMER_BAJARILDI', 'DIZAYN_LOYYAHALASHDA', 'DIZAYN_TASDIQLANDI', 'TZ_PLANNER_TUZILDI', 'SHARTNOMA_IMZOLANDI', 'PRODUCTION', 'TAYYOR_OTK', 'YOPILDI_USTANOVKA'].includes(selectedOrder.status) },
+                  { label: t('orders.design_3d'), active: ['DIZAYN_LOYYAHALASHDA', 'DIZAYN_TASDIQLANDI', 'TZ_PLANNER_TUZILDI', 'SHARTNOMA_IMZOLANDI', 'PRODUCTION', 'TAYYOR_OTK', 'YOPILDI_USTANOVKA'].includes(selectedOrder.status) },
+                  { label: t('orders.tz_planning'), active: ['TZ_PLANNER_TUZILDI', 'SHARTNOMA_IMZOLANDI', 'PRODUCTION', 'TAYYOR_OTK', 'YOPILDI_USTANOVKA'].includes(selectedOrder.status) },
+                  { label: t('orders.contract_production'), active: ['SHARTNOMA_IMZOLANDI', 'PRODUCTION', 'TAYYOR_OTK', 'YOPILDI_USTANOVKA'].includes(selectedOrder.status) }
                 ].map((step, idx) => (
                   <div key={idx} className="relative flex flex-col items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border font-bold text-xs transition ${
@@ -375,25 +377,25 @@ export const OrdersCRM: React.FC = () => {
               {/* Action Form Column */}
               <div className="bg-brand-surface border border-brand-border p-5 rounded-2xl space-y-4">
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-2 border-b border-brand-border pb-3">
-                  <Clipboard className="w-4 h-4 text-brand-emerald" /> Joriy Bosqich Amallari
+                  <Clipboard className="w-4 h-4 text-brand-emerald" /> {t('orders.current_stage_actions')}
                 </h3>
 
                 {selectedOrder.status === 'YANGI_LID' && (
                   <form onSubmit={handleAssignZamer} className="space-y-4">
                     <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl text-xs text-blue-400 flex gap-2">
                       <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      Mijozning xonadonini o'lchash uchun zamerchik (o'lchovchi) biriktiring.
+                      {t('orders.assign_zamerchik_hint')}
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-400 uppercase">O'lchovchini Tanlang</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.select_zamerchik')}</label>
                       <select 
                         value={zamerForm.workerId}
                         onChange={(e) => setZamerForm({ ...zamerForm, workerId: e.target.value })}
                         required
                         className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
                       >
-                        <option value="">O'lchovchini tanlang</option>
+                        <option value="">{t('orders.select_zamerchik_placeholder')}</option>
                         {zamerchiks.map(w => (
                           <option key={w.id} value={w.id}>{w.fullName} ({w.specialty})</option>
                         ))}
@@ -401,7 +403,7 @@ export const OrdersCRM: React.FC = () => {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-400 uppercase">O'lchov Sanasi va Vaqti</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.measurement_date_time')}</label>
                       <input 
                         type="datetime-local"
                         value={zamerForm.scheduledAt}
@@ -415,7 +417,7 @@ export const OrdersCRM: React.FC = () => {
                       type="submit"
                       className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
                     >
-                      O'lchovchini Biriktirish <ArrowRight className="w-4 h-4" />
+                      {t('orders.assign_zamerchik')} <ArrowRight className="w-4 h-4" />
                     </button>
                   </form>
                 )}
@@ -424,12 +426,12 @@ export const OrdersCRM: React.FC = () => {
                   <form onSubmit={handleUploadZamer} className="space-y-4">
                     <div className="p-3 bg-yellow-500/5 border border-yellow-500/10 rounded-xl text-xs text-yellow-400 flex gap-2">
                       <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      Planshetdan o'lchovchi kiritadigan aniq xona o'lchamlarini to'ldiring.
+                      {t('orders.fill_measurement_hint')}
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-black text-slate-400 uppercase">Uzunligi (m)</label>
+                        <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.length_m')}</label>
                         <input 
                           type="number" step="0.1" 
                           value={zamerDetailsForm.length}
@@ -438,7 +440,7 @@ export const OrdersCRM: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-black text-slate-400 uppercase">Kengligi (m)</label>
+                        <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.width_m')}</label>
                         <input 
                           type="number" step="0.1" 
                           value={zamerDetailsForm.width}
@@ -447,7 +449,7 @@ export const OrdersCRM: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-black text-slate-400 uppercase">Balandligi (m)</label>
+                        <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.height_m')}</label>
                         <input 
                           type="number" step="0.1" 
                           value={zamerDetailsForm.height}
@@ -458,7 +460,7 @@ export const OrdersCRM: React.FC = () => {
                     </div>
 
                     <div className="space-y-2 border-t border-brand-border/60 pt-3">
-                      <label className="text-[11px] font-black text-slate-400 uppercase block mb-1">Xona Xususiyatlari</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase block mb-1">{t('orders.room_features')}</label>
                       
                       <div className="grid grid-cols-2 gap-3">
                         <label className="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
@@ -468,7 +470,7 @@ export const OrdersCRM: React.FC = () => {
                             onChange={(e) => setZamerDetailsForm({ ...zamerDetailsForm, has90DegreeCorners: e.target.checked })}
                             className="accent-brand-emerald rounded border-slate-700 w-4 h-4 bg-slate-900"
                           />
-                          Burchaklar 90° mi?
+                          {t('orders.corners_90')}
                         </label>
                         <label className="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
                           <input 
@@ -477,7 +479,7 @@ export const OrdersCRM: React.FC = () => {
                             onChange={(e) => setZamerDetailsForm({ ...zamerDetailsForm, hasGasPipes: e.target.checked })}
                             className="accent-brand-emerald rounded border-slate-700 w-4 h-4 bg-slate-900"
                           />
-                          Gaz quvuri bormi?
+                          {t('orders.gas_pipes')}
                         </label>
                         <label className="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
                           <input 
@@ -486,7 +488,7 @@ export const OrdersCRM: React.FC = () => {
                             onChange={(e) => setZamerDetailsForm({ ...zamerDetailsForm, hasWaterPipes: e.target.checked })}
                             className="accent-brand-emerald rounded border-slate-700 w-4 h-4 bg-slate-900"
                           />
-                          Suv quvuri bormi?
+                          {t('orders.water_pipes')}
                         </label>
                         <label className="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
                           <input 
@@ -495,7 +497,7 @@ export const OrdersCRM: React.FC = () => {
                             onChange={(e) => setZamerDetailsForm({ ...zamerDetailsForm, hasElectricalOutlets: e.target.checked })}
                             className="accent-brand-emerald rounded border-slate-700 w-4 h-4 bg-slate-900"
                           />
-                          Elektro rozetkalar bor?
+                          {t('orders.electrical_outlets')}
                         </label>
                       </div>
                     </div>
@@ -504,7 +506,7 @@ export const OrdersCRM: React.FC = () => {
                       type="submit"
                       className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
                     >
-                      O'lchov Ma'lumotlarini Yuklash <ArrowRight className="w-4 h-4" />
+                      {t('orders.upload_measurement')} <ArrowRight className="w-4 h-4" />
                     </button>
                   </form>
                 )}
@@ -514,11 +516,11 @@ export const OrdersCRM: React.FC = () => {
                     <form onSubmit={handleUploadDesign} className="space-y-4">
                       <div className="p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl text-xs text-purple-400 flex gap-2">
                         <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                        3D dizayner chizgan Render yoki OBJ/GLTF render rasmini yuklang.
+                        {t('orders.upload_design_hint')}
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[11px] font-black text-slate-400 uppercase">3D Render Rasm Linki</label>
+                        <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.design_link')}</label>
                         <input 
                           type="text" 
                           placeholder="https://image-link.com/render.jpg"
@@ -532,7 +534,7 @@ export const OrdersCRM: React.FC = () => {
                         type="submit"
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
                       >
-                        3D Dizayn Renderini Yuklash
+                        {t('orders.upload_design')}
                       </button>
                     </form>
 
@@ -542,7 +544,7 @@ export const OrdersCRM: React.FC = () => {
                           onClick={() => approveDesign(selectedOrderId)}
                           className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-3 rounded-xl transition flex items-center justify-center gap-2"
                         >
-                          Dizaynni Mijoz Tasdiqladi <Check className="w-4 h-4" />
+                          {t('orders.design_approved')} <Check className="w-4 h-4" />
                         </button>
                       </div>
                     )}
@@ -553,11 +555,11 @@ export const OrdersCRM: React.FC = () => {
                   <form onSubmit={handleCreateScheduleSubmit} className="space-y-4">
                     <div className="p-3 bg-pink-500/5 border border-pink-500/10 rounded-xl text-xs text-pink-400 flex gap-2">
                       <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      Buyurtma ishlab chiqarilish boshlanishi va tayyorlanishi (Deadline) sanalarini rejalashtiring.
+                      {t('orders.schedule_hint')}
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-400 uppercase">Ishlab chiqarish boshlanishi</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.production_start')}</label>
                       <input 
                         type="date"
                         value={scheduleForm.startDate}
@@ -568,7 +570,7 @@ export const OrdersCRM: React.FC = () => {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-400 uppercase">Mijozga topshirish kuni (Deadline)</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.deadline')}</label>
                       <input 
                         type="date"
                         value={scheduleForm.endDate}
@@ -582,7 +584,7 @@ export const OrdersCRM: React.FC = () => {
                       type="submit"
                       className="w-full bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
                     >
-                      TZ Rejani Tasdiqlash <ArrowRight className="w-4 h-4" />
+                      {t('orders.approve_tz')} <ArrowRight className="w-4 h-4" />
                     </button>
                   </form>
                 )}
@@ -591,11 +593,11 @@ export const OrdersCRM: React.FC = () => {
                   <form onSubmit={handleSignContractSubmit} className="space-y-4">
                     <div className="p-3 bg-teal-500/5 border border-teal-500/10 rounded-xl text-xs text-teal-400 flex gap-2">
                       <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      Shartnomani chop eting, avans to'lovini qabul qilib faollashtiring.
+                      {t('orders.contract_hint')}
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-400 uppercase">Shartnoma Jami Summasi (UZS)</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.total_sum')}</label>
                       <input 
                         type="number"
                         value={contractForm.totalPrice}
@@ -605,7 +607,7 @@ export const OrdersCRM: React.FC = () => {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-400 uppercase">Avans To'lovi Summasi (UZS)</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.advance_sum')}</label>
                       <input 
                         type="number"
                         value={contractForm.advancePayment}
@@ -615,15 +617,15 @@ export const OrdersCRM: React.FC = () => {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-400 uppercase">To'lov Turi</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.payment_type')}</label>
                       <select 
                         value={contractForm.paymentMethod}
                         onChange={(e) => setContractForm({ ...contractForm, paymentMethod: e.target.value as any })}
                         className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none"
                       >
-                        <option value="CARD">Plastik Karta</option>
-                        <option value="CASH">Naqd Pul</option>
-                        <option value="BANK_TRANSFER">Hisob-Raqam</option>
+                        <option value="CARD">{t('orders.card')}</option>
+                        <option value="CASH">{t('orders.cash')}</option>
+                        <option value="BANK_TRANSFER">{t('orders.bank_transfer')}</option>
                       </select>
                     </div>
 
@@ -633,13 +635,13 @@ export const OrdersCRM: React.FC = () => {
                         onClick={triggerPrintContract}
                         className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 border border-brand-border"
                       >
-                        <Printer className="w-4 h-4" /> Shartnoma Chop Etish
+                        <Printer className="w-4 h-4" /> {t('orders.print_contract')}
                       </button>
                       <button 
                         type="submit"
                         className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
                       >
-                        Imzolash & Avans Qabul Qilish
+                        {t('orders.sign_accept')}
                       </button>
                     </div>
                   </form>
@@ -649,21 +651,21 @@ export const OrdersCRM: React.FC = () => {
                   <div className="p-4 bg-slate-900 border border-brand-border rounded-xl text-center space-y-3">
                     <Check className="w-10 h-10 text-brand-emerald mx-auto bg-brand-emerald/10 p-2 rounded-full" />
                     <div>
-                      <h4 className="text-sm font-bold text-slate-200">Shartnoma Imzolangan & Faollashtirilgan</h4>
-                      <p className="text-xs text-slate-500 mt-1">Loyiha ishlab chiqarish va konveyer jarayonlarida ketmoqda.</p>
+                      <h4 className="text-sm font-bold text-slate-200">{t('orders.contract_signed')}</h4>
+                      <p className="text-xs text-slate-500 mt-1">{t('orders.production_process')}</p>
                     </div>
                     {selectedOrder.totalPrice > 0 && (
                       <div className="p-3 bg-brand-dark/40 rounded-lg text-xs font-mono text-left space-y-1">
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Jami Narx:</span>
+                          <span className="text-slate-500">{t('orders.total_price')}</span>
                           <span className="text-slate-300 font-black">{selectedOrder.totalPrice.toLocaleString()} UZS</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">To'langan avans:</span>
+                          <span className="text-slate-500">{t('orders.paid_advance')}</span>
                           <span className="text-brand-emerald font-black">{selectedOrder.advancePayment.toLocaleString()} UZS</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Qoldiq to'lov:</span>
+                          <span className="text-slate-500">{t('orders.remaining_payment')}</span>
                           <span className="text-yellow-400 font-black">{(selectedOrder.totalPrice - selectedOrder.advancePayment).toLocaleString()} UZS</span>
                         </div>
                       </div>
@@ -672,7 +674,7 @@ export const OrdersCRM: React.FC = () => {
                       onClick={triggerPrintContract}
                       className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2 rounded-lg transition flex items-center justify-center gap-2"
                     >
-                      <Printer className="w-4 h-4" /> Shartnomani Qaytadan Chop Etish
+                      <Printer className="w-4 h-4" /> {t('orders.reprint_contract')}
                     </button>
                   </div>
                 )}
@@ -682,7 +684,7 @@ export const OrdersCRM: React.FC = () => {
               {/* Data / Visual Information Column */}
               <div className="bg-brand-surface border border-brand-border p-5 rounded-2xl space-y-5">
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-2 border-b border-brand-border pb-3">
-                  <Ruler className="w-4 h-4 text-brand-emerald" /> Loyiha Chizmalari va O'lchamlari
+                  <Ruler className="w-4 h-4 text-brand-emerald" /> {t('orders.project_drawings')}
                 </h3>
 
                 {selectedOrder.dimensions ? (
@@ -690,43 +692,43 @@ export const OrdersCRM: React.FC = () => {
                     {/* Dimension Badges */}
                     <div className="grid grid-cols-3 gap-3">
                       <div className="bg-slate-900 border border-brand-border p-2.5 rounded-xl text-center">
-                        <span className="text-[10px] text-slate-500 font-bold block uppercase mb-0.5">Uzunligi</span>
-                        <span className="text-sm font-black text-slate-200">{selectedOrder.dimensions.length} metr</span>
+                        <span className="text-[10px] text-slate-500 font-bold block uppercase mb-0.5">{t('orders.length')}</span>
+                        <span className="text-sm font-black text-slate-200">{selectedOrder.dimensions.length} {t('orders.meter')}</span>
                       </div>
                       <div className="bg-slate-900 border border-brand-border p-2.5 rounded-xl text-center">
-                        <span className="text-[10px] text-slate-500 font-bold block uppercase mb-0.5">Kengligi</span>
-                        <span className="text-sm font-black text-slate-200">{selectedOrder.dimensions.width} metr</span>
+                        <span className="text-[10px] text-slate-500 font-bold block uppercase mb-0.5">{t('orders.width')}</span>
+                        <span className="text-sm font-black text-slate-200">{selectedOrder.dimensions.width} {t('orders.meter')}</span>
                       </div>
                       <div className="bg-slate-900 border border-brand-border p-2.5 rounded-xl text-center">
-                        <span className="text-[10px] text-slate-500 font-bold block uppercase mb-0.5">Balandligi</span>
-                        <span className="text-sm font-black text-slate-200">{selectedOrder.dimensions.height} metr</span>
+                        <span className="text-[10px] text-slate-500 font-bold block uppercase mb-0.5">{t('orders.height')}</span>
+                        <span className="text-sm font-black text-slate-200">{selectedOrder.dimensions.height} {t('orders.meter')}</span>
                       </div>
                     </div>
 
                     {/* Room Attributes */}
                     <div className="p-3.5 bg-slate-900 border border-brand-border rounded-xl space-y-2 text-xs font-semibold text-slate-400">
                       <div className="flex justify-between">
-                        <span>Burchaklar burchagi (90°):</span>
+                        <span>{t('orders.corners_angle')}</span>
                         <span className={selectedOrder.dimensions.has90DegreeCorners ? 'text-brand-emerald' : 'text-rose-500'}>
-                          {selectedOrder.dimensions.has90DegreeCorners ? 'To\'g\'ri' : 'Notekis og\'ishlar bor'}
+                          {selectedOrder.dimensions.has90DegreeCorners ? t('orders.straight') : t('orders.uneven')}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Gaz quvurlari:</span>
+                        <span>{t('orders.gas_pipes_label')}</span>
                         <span className={selectedOrder.dimensions.hasGasPipes ? 'text-yellow-400' : 'text-slate-500'}>
-                          {selectedOrder.dimensions.hasGasPipes ? 'Mavjud (E\'tibor bering)' : 'Yo\'q'}
+                          {selectedOrder.dimensions.hasGasPipes ? t('orders.present_warn') : t('orders.absent')}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Suv quvurlari nuqtasi:</span>
+                        <span>{t('orders.water_pipes_label')}</span>
                         <span className={selectedOrder.dimensions.hasWaterPipes ? 'text-brand-emerald' : 'text-slate-500'}>
-                          {selectedOrder.dimensions.hasWaterPipes ? 'Bor' : 'Yo\'q'}
+                          {selectedOrder.dimensions.hasWaterPipes ? t('orders.present') : t('orders.absent')}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Rozetka / Elektro nuqtalar:</span>
+                        <span>{t('orders.outlets_label')}</span>
                         <span className={selectedOrder.dimensions.hasElectricalOutlets ? 'text-brand-emerald' : 'text-slate-500'}>
-                          {selectedOrder.dimensions.hasElectricalOutlets ? 'Bor' : 'Yo\'q'}
+                          {selectedOrder.dimensions.hasElectricalOutlets ? t('orders.present') : t('orders.absent')}
                         </span>
                       </div>
                     </div>
@@ -734,24 +736,24 @@ export const OrdersCRM: React.FC = () => {
                     {/* 3D Design Render */}
                     {selectedOrder.design3dUrl ? (
                       <div className="space-y-2">
-                        <span className="text-[11px] font-black text-slate-500 uppercase block">Tasdiqlangan 3D Loyiha Modeli</span>
+                        <span className="text-[11px] font-black text-slate-500 uppercase block">{t('orders.approved_model')}</span>
                         <div className="relative rounded-xl overflow-hidden border border-brand-border bg-slate-950 aspect-video">
                           <img 
                             src={selectedOrder.design3dUrl} 
-                            alt="Mebel 3D render" 
+                            alt={t('orders.render_alt')} 
                             className="w-full h-full object-cover"
                           />
                         </div>
                       </div>
                     ) : (
                       <div className="py-10 border border-dashed border-brand-border rounded-xl text-center text-xs text-slate-500 font-bold">
-                        3D model loyihasi hali yuklanmagan.
+                        {t('orders.no_model')}
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="py-12 border border-dashed border-brand-border rounded-xl text-center text-xs text-slate-500 font-bold">
-                    O'lchamlar mavjud emas. Avval o'lchov operatsiyasini bajaring.
+                    {t('orders.no_measurements')}
                   </div>
                 )}
               </div>
@@ -760,7 +762,7 @@ export const OrdersCRM: React.FC = () => {
           </>
         ) : (
           <div className="text-center py-20 text-slate-500 font-bold text-sm">
-            Buyurtma tanlanmagan.
+            {t('orders.no_order_selected')}
           </div>
         )}
       </div>
@@ -770,7 +772,7 @@ export const OrdersCRM: React.FC = () => {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-brand-surface border border-brand-border w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
             <div className="px-6 py-4 border-b border-brand-border flex justify-between items-center bg-slate-900/50">
-              <h2 className="text-base font-black text-slate-100">Yangi Lid / Buyurtma Qo'shish</h2>
+              <h2 className="text-base font-black text-slate-100">{t('orders.add_lead')}</h2>
               <button 
                 onClick={() => setShowAddLead(false)}
                 className="text-slate-500 hover:text-slate-300 font-bold"
@@ -781,10 +783,10 @@ export const OrdersCRM: React.FC = () => {
             
             <form onSubmit={handleAddLeadSubmit} className="p-6 space-y-4">
               <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-400 uppercase">Mijozning To'liq F.I.O</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.full_name')}</label>
                 <input 
                   type="text"
-                  placeholder="Masalan: Sardor Komilov"
+                  placeholder={t('orders.name_placeholder')}
                   required
                   value={leadForm.customerName}
                   onChange={(e) => setLeadForm({ ...leadForm, customerName: e.target.value })}
@@ -793,7 +795,7 @@ export const OrdersCRM: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-400 uppercase">Telefon Raqami</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.phone')}</label>
                 <input 
                   type="text"
                   placeholder="+998 90 123 45 67"
@@ -806,21 +808,21 @@ export const OrdersCRM: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-black text-slate-400 uppercase">Kelish Manbasi</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.source_label')}</label>
                   <select 
                     value={leadForm.source}
                     onChange={(e) => setLeadForm({ ...leadForm, source: e.target.value as any })}
                     className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none"
                   >
-                    <option value="TELEGRAM">Telegram</option>
-                    <option value="INSTAGRAM">Instagram</option>
-                    <option value="PHONE">Telefon</option>
-                    <option value="OFFICE">Ofis (Keluvchi)</option>
+                    <option value="TELEGRAM">{t('orders.telegram')}</option>
+                    <option value="INSTAGRAM">{t('orders.instagram')}</option>
+                    <option value="PHONE">{t('orders.phone_call')}</option>
+                    <option value="OFFICE">{t('orders.office_visit')}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-black text-slate-400 uppercase">Kutilayotgan Summa (UZS)</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase">{t('orders.expected_sum')}</label>
                   <input 
                     type="number"
                     value={leadForm.totalPrice}
@@ -836,13 +838,13 @@ export const OrdersCRM: React.FC = () => {
                   onClick={() => setShowAddLead(false)}
                   className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2 rounded-xl border border-brand-border transition"
                 >
-                  Bekor qilish
+                  {t('orders.cancel')}
                 </button>
                 <button 
                   type="submit"
                   className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark text-xs font-black px-5 py-2 rounded-xl transition"
                 >
-                  Lid Yaratish
+                  {t('orders.create_lead')}
                 </button>
               </div>
             </form>

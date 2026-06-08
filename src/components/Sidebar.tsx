@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   Columns, 
   LayoutDashboard, 
@@ -11,13 +12,14 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
+  const { t } = useTranslation();
   const menuItems = [
-    { to: '/orders', label: 'CRM & Orders', icon: <Users className="w-4 h-4" /> },
-    { to: '/inventory', label: 'Inventory & BOM', icon: <Package className="w-4 h-4" /> },
-    { to: '/', label: 'Kanban Board', icon: <Columns className="w-4 h-4" /> },
-    { to: '/dashboard', label: 'Manager Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { to: '/tablet', label: 'Worker Tablet', icon: <Smartphone className="w-4 h-4" /> },
-    { to: '/finance', label: 'Finance Ledger', icon: <Wallet className="w-4 h-4" /> }
+    { to: '/orders', label: t('sidebar.crm_orders'), icon: <Users className="w-4 h-4" /> },
+    { to: '/inventory', label: t('sidebar.inventory_bom'), icon: <Package className="w-4 h-4" /> },
+    { to: '/', label: t('sidebar.kanban_board'), icon: <Columns className="w-4 h-4" /> },
+    { to: '/dashboard', label: t('sidebar.manager_dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
+    { to: '/tablet', label: t('sidebar.worker_tablet'), icon: <Smartphone className="w-4 h-4" /> },
+    { to: '/finance', label: t('sidebar.finance_ledger'), icon: <Wallet className="w-4 h-4" /> }
   ];
 
   return (

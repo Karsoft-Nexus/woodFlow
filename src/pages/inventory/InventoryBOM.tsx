@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
+import { useTranslation } from 'react-i18next';
 import { 
   Package, 
   Plus, 
@@ -16,6 +17,7 @@ import type { ProductCategory } from '../../types';
 
 
 export const InventoryBOM: React.FC = () => {
+  const { t } = useTranslation();
   const { 
     products, 
     bomItems, 
@@ -127,9 +129,9 @@ export const InventoryBOM: React.FC = () => {
       <div className="bg-brand-surface border-b border-brand-border p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-xl font-extrabold text-slate-100 flex items-center gap-2">
-            <Package className="w-6 h-6 text-brand-emerald" /> Omborxona va Xomashyo Boshqaruvi
+            <Package className="w-6 h-6 text-brand-emerald" /> {t('inventory.title')}
           </h1>
-          <p className="text-xs text-slate-400 font-medium mt-1">Materiallar bron qilish, kirim/chiqim hisobi va buyurtma BOM (retsept) tahriri.</p>
+          <p className="text-xs text-slate-400 font-medium mt-1">{t('inventory.subtitle')}</p>
         </div>
 
         {/* Categories select tab */}
@@ -140,7 +142,7 @@ export const InventoryBOM: React.FC = () => {
               activeTab === 'STOCK' ? 'bg-brand-emerald text-brand-dark' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Ombor Qoldiqlari
+            {t('inventory.tab_stock')}
           </button>
           <button 
             onClick={() => setActiveTab('TRANSACTIONS')}
@@ -148,7 +150,7 @@ export const InventoryBOM: React.FC = () => {
               activeTab === 'TRANSACTIONS' ? 'bg-brand-emerald text-brand-dark' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Kirim-Chiqim Tarixi
+            {t('inventory.tab_transactions')}
           </button>
           <button 
             onClick={() => setActiveTab('BOM')}
@@ -156,7 +158,7 @@ export const InventoryBOM: React.FC = () => {
               activeTab === 'BOM' ? 'bg-brand-emerald text-brand-dark' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            BOM (Retsept) Muharriri
+            {t('inventory.tab_bom')}
           </button>
         </div>
       </div>
@@ -174,8 +176,8 @@ export const InventoryBOM: React.FC = () => {
                   <Package className="w-6 h-6" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 font-extrabold uppercase">Ombordagi Jami Materiallar</span>
-                  <h3 className="text-xl font-black text-slate-100">{totalStockItems} ta</h3>
+                  <span className="text-[10px] text-slate-500 font-extrabold uppercase">{t('inventory.total_stock')}</span>
+                  <h3 className="text-xl font-black text-slate-100">{totalStockItems} {t('inventory.count_items')}</h3>
                 </div>
               </div>
 
@@ -184,8 +186,8 @@ export const InventoryBOM: React.FC = () => {
                   <ShoppingCart className="w-6 h-6" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 font-extrabold uppercase">Zaxiraga (Bron) Olingan</span>
-                  <h3 className="text-xl font-black text-slate-100">{totalReservedItems} ta</h3>
+                  <span className="text-[10px] text-slate-500 font-extrabold uppercase">{t('inventory.reserved_stock')}</span>
+                  <h3 className="text-xl font-black text-slate-100">{totalReservedItems} {t('inventory.count_items')}</h3>
                 </div>
               </div>
 
@@ -194,8 +196,8 @@ export const InventoryBOM: React.FC = () => {
                   <AlertTriangle className="w-6 h-6" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 font-extrabold uppercase">Tugayotgan Mahsulotlar</span>
-                  <h3 className="text-xl font-black text-rose-500">{lowStockItems.length} ta turda</h3>
+                  <span className="text-[10px] text-slate-500 font-extrabold uppercase">{t('inventory.low_stock')}</span>
+                  <h3 className="text-xl font-black text-rose-500">{lowStockItems.length} {t('inventory.count_types')}</h3>
                 </div>
               </div>
             </div>
@@ -207,7 +209,7 @@ export const InventoryBOM: React.FC = () => {
                   <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
                   <input 
                     type="text" 
-                    placeholder="Material nomini qidirish..."
+                    placeholder={t('inventory.search_placeholder')}
                     value={stockSearchQuery}
                     onChange={(e) => setStockSearchQuery(e.target.value)}
                     className="bg-brand-dark border border-brand-border rounded-xl pl-9 pr-4 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald w-64"
@@ -219,14 +221,14 @@ export const InventoryBOM: React.FC = () => {
                   onChange={(e) => setStockCategory(e.target.value)}
                   className="bg-brand-dark border border-brand-border rounded-xl px-3 py-2 text-xs font-semibold text-slate-300 focus:outline-none"
                 >
-                  <option value="ALL">Barcha Toifalar</option>
-                  <option value="PLATES">Plitalar (DSP/MDF)</option>
-                  <option value="STOLISHNITSA">Stolishnitsalar</option>
-                  <option value="EDGES">Kromka</option>
-                  <option value="FURNITURES">Furnituralar (Petlya, Shrup)</option>
-                  <option value="ACCESSORIES">Aksessuarlar (Rushka, Porshun)</option>
-                  <option value="WEIGHT_ITEMS">Og'irlik xomashyolar (Yelim, kg)</option>
-                  <option value="GLASS">Oyna va Shishalar</option>
+                  <option value="ALL">{t('inventory.all_categories')}</option>
+                  <option value="PLATES">{t('inventory.cat_plates')}</option>
+                  <option value="STOLISHNITSA">{t('inventory.cat_stolishnitsa')}</option>
+                  <option value="EDGES">{t('inventory.cat_edges')}</option>
+                  <option value="FURNITURES">{t('inventory.cat_furnitures')}</option>
+                  <option value="ACCESSORIES">{t('inventory.cat_accessories')}</option>
+                  <option value="WEIGHT_ITEMS">{t('inventory.cat_weight_items')}</option>
+                  <option value="GLASS">{t('inventory.cat_glass')}</option>
                 </select>
 
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-400 select-none cursor-pointer">
@@ -236,7 +238,7 @@ export const InventoryBOM: React.FC = () => {
                     onChange={(e) => setShowLowStockOnly(e.target.checked)}
                     className="accent-brand-emerald w-4 h-4 bg-slate-900 border-slate-700"
                   />
-                  Faqat tugayotgan tovarlar
+                  {t('inventory.low_stock_only')}
                 </label>
               </div>
 
@@ -244,7 +246,7 @@ export const InventoryBOM: React.FC = () => {
                 onClick={() => setShowAddTxModal(true)}
                 className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5"
               >
-                <Plus className="w-4 h-4" /> Kirim / Chiqim Qilish
+                <Plus className="w-4 h-4" /> {t('inventory.add_transaction')}
               </button>
             </div>
 
@@ -253,12 +255,12 @@ export const InventoryBOM: React.FC = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-900/50 border-b border-brand-border text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                    <th className="px-5 py-4">Nomi & Toifasi</th>
-                    <th className="px-5 py-4">Joriy Qoldiq</th>
-                    <th className="px-5 py-4">Rezerv (Bron)</th>
-                    <th className="px-5 py-4">Mavjud (Available)</th>
-                    <th className="px-5 py-4">O'rtacha Tannarxi</th>
-                    <th className="px-5 py-4 text-center">Status</th>
+                    <th className="px-5 py-4">{t('inventory.col_name_category')}</th>
+                    <th className="px-5 py-4">{t('inventory.col_current_stock')}</th>
+                    <th className="px-5 py-4">{t('inventory.col_reserved')}</th>
+                    <th className="px-5 py-4">{t('inventory.col_available')}</th>
+                    <th className="px-5 py-4">{t('inventory.col_average_price')}</th>
+                    <th className="px-5 py-4 text-center">{t('inventory.col_status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brand-border/60">
@@ -309,12 +311,12 @@ export const InventoryBOM: React.FC = () => {
         {activeTab === 'TRANSACTIONS' && (
           <div className="h-full flex flex-col p-6 space-y-6 overflow-y-auto">
             <div className="bg-brand-surface border border-brand-border p-4 rounded-2xl flex justify-between items-center">
-              <h3 className="text-sm font-black text-slate-200">Barcha Ombor Amallari Logi</h3>
+              <h3 className="text-sm font-black text-slate-200">{t('inventory.tx_log_title')}</h3>
               <button 
                 onClick={() => setShowAddTxModal(true)}
                 className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs px-4 py-2 rounded-xl transition"
               >
-                Yangi Amaliyot Qo'shish
+                {t('inventory.add_new_tx')}
               </button>
             </div>
 
@@ -322,12 +324,12 @@ export const InventoryBOM: React.FC = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-900/50 border-b border-brand-border text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                    <th className="px-5 py-4">Sana / Vaqt</th>
-                    <th className="px-5 py-4">Mahsulot Nomi</th>
-                    <th className="px-5 py-4">Amaliyot</th>
-                    <th className="px-5 py-4">Miqdori</th>
-                    <th className="px-5 py-4">Narxi (Birlik)</th>
-                    <th className="px-5 py-4">Izohlar / Tafsilotlar</th>
+                    <th className="px-5 py-4">{t('inventory.col_date_time')}</th>
+                    <th className="px-5 py-4">{t('inventory.col_product_name')}</th>
+                    <th className="px-5 py-4">{t('inventory.col_operation')}</th>
+                    <th className="px-5 py-4">{t('inventory.bom_qty')}</th>
+                    <th className="px-5 py-4">{t('inventory.col_unit_price')}</th>
+                    <th className="px-5 py-4">{t('inventory.col_notes')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brand-border/60">
@@ -340,7 +342,7 @@ export const InventoryBOM: React.FC = () => {
                           {new Date(tx.createdAt).toLocaleString('uz-UZ')}
                         </td>
                         <td className="px-5 py-4">
-                          <div className="font-bold text-slate-200">{prod?.name || 'Noma\'lum mahsulot'}</div>
+                          <div className="font-bold text-slate-200">{prod?.name || t('inventory.unknown_product')}</div>
                           <span className="text-[10px] text-slate-500 font-mono">{tx.productId}</span>
                         </td>
                         <td className="px-5 py-4">
@@ -350,7 +352,7 @@ export const InventoryBOM: React.FC = () => {
                               : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
                           }`}>
                             {isKirim ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                            {isKirim ? 'KIRIM' : 'CHIQIM'}
+                            {isKirim ? t('inventory.tx_in') : t('inventory.tx_out')}
                           </span>
                         </td>
                         <td className="px-5 py-4 font-mono font-bold">
@@ -378,7 +380,7 @@ export const InventoryBOM: React.FC = () => {
             <div className="w-80 border-r border-brand-border bg-slate-900/25 flex flex-col h-full">
               <div className="p-4 border-b border-brand-border">
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
-                  <ClipboardList className="w-4.5 h-4.5 text-brand-emerald" /> Faol Buyurtmalar
+                  <ClipboardList className="w-4.5 h-4.5 text-brand-emerald" /> {t('inventory.active_orders')}
                 </h3>
               </div>
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -395,7 +397,7 @@ export const InventoryBOM: React.FC = () => {
                     <div className="font-mono text-[10px] font-bold text-slate-500 mb-1">{order.orderNumber}</div>
                     <div className="font-extrabold text-xs text-slate-200">{order.customerName}</div>
                     <div className="mt-2 text-[10px] font-semibold text-slate-500 flex justify-between">
-                      <span>Status:</span>
+                      <span>{t('inventory.order_status')}</span>
                       <span className="text-brand-emerald">{order.status}</span>
                     </div>
                   </div>
@@ -409,13 +411,13 @@ export const InventoryBOM: React.FC = () => {
                 <>
                   <div className="bg-brand-surface border border-brand-border p-5 rounded-2xl flex justify-between items-center">
                     <div>
-                      <span className="text-[10px] text-slate-500 font-extrabold block uppercase mb-1">Buyurtma Ma'lumoti</span>
+                      <span className="text-[10px] text-slate-500 font-extrabold block uppercase mb-1">{t('inventory.order_info')}</span>
                       <h3 className="text-base font-black text-slate-100">{currentBOMOrder.customerName} ({currentBOMOrder.orderNumber})</h3>
-                      <p className="text-xs text-slate-400 mt-1 font-semibold">Turi: {currentBOMOrder.source} • Status: {currentBOMOrder.status}</p>
+                      <p className="text-xs text-slate-400 mt-1 font-semibold">{t('inventory.order_type')} {currentBOMOrder.source} • {t('inventory.order_status')} {currentBOMOrder.status}</p>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-500 font-extrabold block mb-1">Xomashyo Jami Tannarxi</span>
+                      <span className="text-[10px] text-slate-500 font-extrabold block mb-1">{t('inventory.total_bom_cost')}</span>
                       <span className="text-lg font-black text-brand-emerald font-mono flex items-center justify-end">
                         <DollarSign className="w-5 h-5 -mr-1" /> {totalBOMCost.toLocaleString()} UZS
                       </span>
@@ -424,24 +426,24 @@ export const InventoryBOM: React.FC = () => {
 
                   {/* Add BOM Item Form */}
                   <div className="bg-brand-surface border border-brand-border p-5 rounded-2xl">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-4">Material / Xomashyo Retseptga Qo'shish</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-4">{t('inventory.add_to_bom')}</h4>
                     <form onSubmit={handleAddBOMItemSubmit} className="flex flex-col md:flex-row items-end gap-4">
                       
                       <div className="flex-1 space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Material Turini Tanlang</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase">{t('inventory.select_material')}</label>
                         <select 
                           value={newBOMItemForm.productId}
                           onChange={(e) => setNewBOMItemForm({ ...newBOMItemForm, productId: e.target.value })}
                           className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none"
                         >
                           {products.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} ({p.quantityInStock} {p.unitOfMeasure} mavjud)</option>
+                            <option key={p.id} value={p.id}>{p.name} ({p.quantityInStock} {p.unitOfMeasure} {t('inventory.available')})</option>
                           ))}
                         </select>
                       </div>
 
                       <div className="w-32 space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Miqdori</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase">{t('inventory.bom_qty')}</label>
                         <input 
                           type="number" 
                           min="0.01"
@@ -456,7 +458,7 @@ export const InventoryBOM: React.FC = () => {
                         type="submit"
                         className="bg-brand-emerald hover:bg-brand-emerald/90 text-brand-dark font-black text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-1.5"
                       >
-                        <Plus className="w-4 h-4" /> BOMga Qo'shish
+                        <Plus className="w-4 h-4" /> {t('inventory.add_to_bom_btn')}
                       </button>
                     </form>
                   </div>
@@ -466,19 +468,19 @@ export const InventoryBOM: React.FC = () => {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-slate-900/50 border-b border-brand-border text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                          <th className="px-5 py-4">Mahsulot Nomi</th>
-                          <th className="px-5 py-4">Kerakli Miqdor</th>
-                          <th className="px-5 py-4">Bron Qilingan</th>
-                          <th className="px-5 py-4">Birlik Narx</th>
-                          <th className="px-5 py-4">Jami Narx</th>
-                          <th className="px-5 py-4 text-center">O'chirish</th>
+                          <th className="px-5 py-4">{t('inventory.col_product_name')}</th>
+                          <th className="px-5 py-4">{t('inventory.col_required_qty')}</th>
+                          <th className="px-5 py-4">{t('inventory.col_bom_reserved')}</th>
+                          <th className="px-5 py-4">{t('inventory.col_bom_unit_price')}</th>
+                          <th className="px-5 py-4">{t('inventory.col_bom_total_price')}</th>
+                          <th className="px-5 py-4 text-center">{t('inventory.col_delete')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-brand-border/60">
                         {orderBOMItems.length === 0 ? (
                           <tr>
                             <td colSpan={6} className="text-center py-10 text-xs text-slate-500 font-bold">
-                              Materiallar retseptga biriktirilmagan. Yuqoridan qo'shishingiz mumkin.
+                              {t('inventory.no_bom_items')}
                             </td>
                           </tr>
                         ) : (
@@ -488,7 +490,7 @@ export const InventoryBOM: React.FC = () => {
                             return (
                               <tr key={item.id} className="text-slate-300 font-semibold text-xs hover:bg-slate-900/20">
                                 <td className="px-5 py-4">
-                                  <div className="font-bold text-slate-200">{p?.name || 'Noma\'lum'}</div>
+                                  <div className="font-bold text-slate-200">{p?.name || t('inventory.unknown')}</div>
                                   <span className="text-[10px] text-slate-500 font-mono">{item.productId}</span>
                                 </td>
                                 <td className="px-5 py-4 font-mono font-bold">
@@ -521,7 +523,7 @@ export const InventoryBOM: React.FC = () => {
                 </>
               ) : (
                 <div className="text-center py-20 text-slate-500 font-bold text-sm">
-                  Kichik TZ / Loyihalash bosqichidagi buyurtma tanlanmagan.
+                  {t('inventory.no_order_selected')}
                 </div>
               )}
             </div>
@@ -536,7 +538,7 @@ export const InventoryBOM: React.FC = () => {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-brand-surface border border-brand-border w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
             <div className="px-6 py-4 border-b border-brand-border flex justify-between items-center bg-slate-900/50">
-              <h2 className="text-base font-black text-slate-100">Omborga Kirim / Chiqim Amaliyoti</h2>
+              <h2 className="text-base font-black text-slate-100">{t('inventory.modal_tx_title')}</h2>
               <button 
                 onClick={() => setShowAddTxModal(false)}
                 className="text-slate-500 hover:text-slate-300 font-bold"
@@ -547,7 +549,7 @@ export const InventoryBOM: React.FC = () => {
             
             <form onSubmit={handleStockTxSubmit} className="p-6 space-y-4">
               <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-400 uppercase">Material / Tovar</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase">{t('inventory.modal_material')}</label>
                 <select 
                   value={txForm.productId}
                   onChange={(e) => {
@@ -569,19 +571,19 @@ export const InventoryBOM: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-black text-slate-400 uppercase">Amaliyot Turi</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase">{t('inventory.modal_tx_type')}</label>
                   <select 
                     value={txForm.transactionType}
                     onChange={(e) => setTxForm({ ...txForm, transactionType: e.target.value as any })}
                     className="w-full bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none"
                   >
-                    <option value="KIRIM">Kirim (Kassadan materialga)</option>
-                    <option value="CHIQIM">Chiqim (Sexga chiqish)</option>
+                    <option value="KIRIM">{t('inventory.tx_in_desc')}</option>
+                    <option value="CHIQIM">{t('inventory.tx_out_desc')}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-black text-slate-400 uppercase">Miqdori (Qoldiq bo'lsa kasr kiriting)</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase">{t('inventory.modal_qty_hint')}</label>
                   <input 
                     type="number"
                     min="0.01"
@@ -595,7 +597,7 @@ export const InventoryBOM: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-400 uppercase">Birlik Narxi (UZS)</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase">{t('inventory.modal_unit_price')}</label>
                 <input 
                   type="number"
                   required
@@ -606,10 +608,10 @@ export const InventoryBOM: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-400 uppercase">Izoh (Yetkazib beruvchi / Sababi)</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase">{t('inventory.modal_notes_hint')}</label>
                 <input 
                   type="text"
-                  placeholder="Masalan: MebelAlimPlas MChJdan yetkazildi"
+                  placeholder={t('inventory.modal_notes_placeholder')}
                   value={txForm.notes}
                   onChange={(e) => setTxForm({ ...txForm, notes: e.target.value })}
                   className="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-emerald"
@@ -622,7 +624,7 @@ export const InventoryBOM: React.FC = () => {
                   onClick={() => setShowAddTxModal(false)}
                   className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2 rounded-xl border border-brand-border transition"
                 >
-                  Bekor qilish
+                  {t('inventory.cancel')}
                 </button>
                 <button 
                   type="submit"
